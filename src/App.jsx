@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { db } from './firebase';
+
 const mockCatalog = [
   { id: '1', sku: 'LAP-01', name: 'MacBook Pro 16"', quantity: 45, price: 12000.00 },
-  { id: '2', sku: 'MON-02', name: 'Monitor Dell 27"', quantity: 12, price: 2500.00 },
-  { id: '3', sku: 'MSE-03', name: 'Logitech MX Master 3', quantity: 150, price: 600.00 },
-  { id: '4', sku: 'KBD-04', name: 'Keychron K2', quantity: 4, price: 800.00 },
 ];
 
 const mockCompanies = [
@@ -25,12 +25,22 @@ function App() {
   const [customerInfo, setCustomerInfo] = useState(() => JSON.parse(localStorage.getItem('vitrine_customer')) || null);
   const [loginForm, setLoginForm] = useState({ name: '', cnpj: '', phone: '' });
   
+  const [catalog, setCatalog] = useState(mockCatalog);
+  
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('vitrine_cart')) || []);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutMethod, setCheckoutMethod] = useState('PIX');
 
   const [purchaseItem, setPurchaseItem] = useState(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'items'), (snapshot) => {
+      const itemsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setCatalog(itemsList);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (customerInfo) localStorage.setItem('vitrine_customer', JSON.stringify(customerInfo));
@@ -69,28 +79,45 @@ function App() {
     setIsCartOpen(true);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
     
-    let text = `*NOVO PEDIDO DA VITRINE*%0A`;
-    text += `*Cliente:* ${customerInfo.name}%0A`;
-    text += `*Telefone:* ${customerInfo.phone}%0A`;
-    text += `*CNPJ da Loja Atendida:* ${customerInfo.cnpj}%0A`;
-    text += `*Método de Pagamento:* ${checkoutMethod}%0A%0A`;
-    
-    text += `*Itens:*%0A`;
-    cart.forEach(c => {
-      text += `- ${c.cartQuantity}x ${c.name} (R$ ${c.price.toFixed(2)})%0A`;
-    });
-    
     const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
-    text += `%0A*TOTAL: R$ ${total.toFixed(2)}*%0A`;
-
-    alert(`Pedido finalizado! Você será redirecionado para o WhatsApp.`);
-    window.open(`https://wa.me/5586998113557?text=${text}`, '_blank');
     
-    setCart([]);
-    setIsCartOpen(false);
+    const deal = {
+      id: Date.now().toString(),
+      client: customerInfo.name,
+      phone: customerInfo.phone,
+      salesperson: "Vitrine Web",
+      title: `Pedido pelo Site (${checkoutMethod})`,
+      value: total,
+      products: cart.map(c => ({ sku: c.sku, name: c.name, quantity: c.cartQuantity, price: c.price })),
+      status: 'Prospecção',
+      date: new Date().toISOString()
+    };
+
+    try {
+      await setDoc(doc(db, 'deals', deal.id), deal);
+      
+      let text = `*NOVO PEDIDO DA VITRINE*%0A`;
+      text += `*Cliente:* ${customerInfo.name}%0A`;
+      text += `*Telefone:* ${customerInfo.phone}%0A`;
+      text += `*Método de Pagamento:* ${checkoutMethod}%0A%0A`;
+      text += `*Itens:*%0A`;
+      cart.forEach(c => {
+        text += `- ${c.cartQuantity}x ${c.name} (R$ ${c.price.toFixed(2)})%0A`;
+      });
+      text += `%0A*TOTAL: R$ ${total.toFixed(2)}*%0A`;
+
+      alert(`Pedido finalizado com sucesso! Seu pedido já está no sistema da loja.`);
+      window.open(`https://wa.me/5586998113557?text=${text}`, '_blank');
+      
+      setCart([]);
+      setIsCartOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao enviar pedido.');
+    }
   };
 
   if (!customerInfo) {
@@ -184,7 +211,7 @@ function App() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-          {mockCatalog.map(item => {
+          {catalog.map(item => {
             const status = getStatusConfig(item.quantity);
             return (
               <div key={item.id} className="glass-panel" style={{ padding: '1.5rem', borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
