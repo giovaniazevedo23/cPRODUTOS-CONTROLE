@@ -2,13 +2,24 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const mockCatalog = [
-  { id: '1', sku: 'LAP-01', name: 'Notebook Dell Inspiron', quantity: 15, price: 3500 },
-  { id: '2', sku: 'MOU-02', name: 'Mouse Sem Fio Logitech', quantity: 50, price: 120 },
-  { id: '3', sku: 'TEC-03', name: 'Teclado Mecânico Redragon', quantity: 30, price: 250 },
-  { id: '4', sku: 'MON-04', name: 'Monitor LG 24" IPS', quantity: 12, price: 850 },
-  { id: '5', sku: 'HD-05', name: 'SSD Kingston 1TB', quantity: 20, price: 400 },
-  { id: '6', sku: 'CAB-06', name: 'Cabo HDMI 2m', quantity: 100, price: 25 },
+  { id: '1', sku: 'LAP-01', name: 'MacBook Pro 16"', quantity: 45, price: 12000.00 },
+  { id: '2', sku: 'MON-02', name: 'Monitor Dell 27"', quantity: 12, price: 2500.00 },
+  { id: '3', sku: 'MSE-03', name: 'Logitech MX Master 3', quantity: 150, price: 600.00 },
+  { id: '4', sku: 'KBD-04', name: 'Keychron K2', quantity: 4, price: 800.00 },
 ];
+
+const mockCompanies = [
+  { cnpj: '11.111.111/0001-11', name: 'Nazária LTDA' },
+  { cnpj: '22.222.222/0001-22', name: 'Tech Solutions' },
+  { cnpj: '33.333.333/0001-33', name: 'GigaByte Informática' }
+];
+
+const getStatusConfig = (quantity) => {
+  if (quantity === 0) return { label: 'Sem Estoque', color: 'var(--danger)', bg: '#fef2f2' };
+  if (quantity <= 5) return { label: 'Estoque Crítico', color: 'var(--danger)', bg: '#fef2f2' };
+  if (quantity <= 15) return { label: 'Estoque Baixo', color: 'var(--warning)', bg: '#fffbeb' };
+  return { label: 'Em Estoque', color: 'var(--success)', bg: '#ecfdf5' };
+};
 
 function App() {
   const [customerInfo, setCustomerInfo] = useState(() => JSON.parse(localStorage.getItem('vitrine_customer')) || null);
@@ -34,14 +45,8 @@ function App() {
     setCustomerInfo(loginForm);
   };
 
-  const handleCnpjChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 14) value = value.slice(0, 14);
-    value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-    value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-    value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-    value = value.replace(/(\d{4})(\d)/, '$1-$2');
-    setLoginForm({ ...loginForm, cnpj: value });
+  const handleCompanyChange = (e) => {
+    setLoginForm({ ...loginForm, cnpj: e.target.value });
   };
 
   const handlePhoneChange = (e) => {
@@ -99,14 +104,16 @@ function App() {
           <form onSubmit={handleLogin}>
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label>CNPJ da Empresa (Fornecedor)</label>
-              <input 
-                type="text" 
+              <select 
                 required 
-                placeholder="00.000.000/0001-00"
                 value={loginForm.cnpj}
-                onChange={handleCnpjChange}
-                maxLength="18"
-              />
+                onChange={handleCompanyChange}
+              >
+                <option value="">Selecione uma empresa...</option>
+                {mockCompanies.map(comp => (
+                  <option key={comp.cnpj} value={comp.cnpj}>{comp.name} - {comp.cnpj}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label>Seu Nome (Comprador)</label>
@@ -177,25 +184,49 @@ function App() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-          {mockCatalog.map(item => (
-            <div key={item.id} className="glass-panel" style={{ padding: '1.5rem', borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ width: '100%', height: '150px', background: 'var(--background-color)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>
-                📦
+          {mockCatalog.map(item => {
+            const status = getStatusConfig(item.quantity);
+            return (
+              <div key={item.id} className="glass-panel" style={{ padding: '1.5rem', borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ width: '100%', height: '150px', background: 'var(--background-color)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>
+                  📦
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>SKU: {item.sku}</div>
+                <div>
+                  <h3 style={{ margin: '0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{item.name}</h3>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.5rem' }}>R$ {item.price.toFixed(2)}</div>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
+                  <div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Em estoque</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{item.quantity} und</div>
+                  </div>
+                  <div style={{ 
+                    background: status.bg, 
+                    color: status.color, 
+                    padding: '0.25rem 0.75rem', 
+                    borderRadius: '1rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold'
+                  }}>
+                    {status.label}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                  <button 
+                    className="btn-primary" 
+                    style={{ flex: 1, justifyContent: 'center' }}
+                    onClick={() => { setPurchaseItem(item); setPurchaseQuantity(1); }}
+                    disabled={item.quantity === 0}
+                  >
+                    {item.quantity > 0 ? '🛒 Comprar' : 'Esgotado'}
+                  </button>
+                </div>
               </div>
-              <div>
-                <h3 style={{ margin: '0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{item.name}</h3>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.5rem' }}>R$ {item.price.toFixed(2)}</div>
-              </div>
-              <button 
-                className="btn-primary" 
-                style={{ marginTop: 'auto', justifyContent: 'center' }}
-                onClick={() => { setPurchaseItem(item); setPurchaseQuantity(1); }}
-                disabled={item.quantity === 0}
-              >
-                {item.quantity > 0 ? '🛒 Comprar' : 'Esgotado'}
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </main>
 
