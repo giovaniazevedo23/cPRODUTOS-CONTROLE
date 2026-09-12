@@ -4,10 +4,6 @@ import './App.css';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
-const mockCatalog = [
-  { id: '1', sku: 'LAP-01', name: 'MacBook Pro 16"', quantity: 45, price: 12000.00 },
-];
-
 const mockCompanies = [
   { cnpj: '11.111.111/0001-11', name: 'Nazária LTDA' },
   { cnpj: '22.222.222/0001-22', name: 'Tech Solutions' },
@@ -25,7 +21,7 @@ function App() {
   const [customerInfo, setCustomerInfo] = useState(() => JSON.parse(localStorage.getItem('vitrine_customer')) || null);
   const [loginForm, setLoginForm] = useState({ name: '', cnpj: '', phone: '' });
   
-  const [catalog, setCatalog] = useState(mockCatalog);
+  const [catalog, setCatalog] = useState([]);
   
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('vitrine_cart')) || []);
   const [isCartOpen, setIsCartOpen] = useState(false);
