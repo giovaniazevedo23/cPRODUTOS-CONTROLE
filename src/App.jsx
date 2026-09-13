@@ -2644,7 +2644,7 @@ function App() {
                 setSupportMessage('');
               } catch (err) {
                 console.error(err);
-                alert('Erro ao enviar mensagem. Tente novamente mais tarde.');
+                alert(`Erro ao enviar mensagem: ${err?.text || err?.message || JSON.stringify(err)}`);
               }
             }}>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
