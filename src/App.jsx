@@ -361,7 +361,25 @@ function App() {
           const itemRef = doc(db, 'items', item.id);
           const itemDoc = await getDoc(itemRef);
           if (itemDoc.exists()) {
-            await updateDoc(itemRef, { sold: (itemDoc.data().sold || 0) + item.cartQuantity });
+            const currentQuantity = itemDoc.data().quantity || 0;
+            const newQuantity = currentQuantity - item.cartQuantity;
+            await updateDoc(itemRef, { 
+              sold: (itemDoc.data().sold || 0) + item.cartQuantity,
+              quantity: newQuantity,
+              lastMovementDate: new Date().toISOString()
+            });
+
+            const mov = {
+              id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+              sku: item.sku,
+              type: 'SAIDA',
+              quantity: item.cartQuantity,
+              date: new Date().toISOString(),
+              user: "Sistema (Venda Online)",
+              reason: `Venda Online (Cliente: ${customerInfo.name || 'Desconhecido'})`,
+              companyCnpj: customerInfo.cnpj || '00.000.000/0001-00'
+            };
+            await setDoc(doc(db, 'movements', mov.id), mov);
           }
         } catch (e) {
           console.error(e);
