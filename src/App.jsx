@@ -1490,6 +1490,7 @@ function App() {
                         setShowPaymentModal(true);
                       }
                     } else {
+                      setSelectedCard(savedCards[0]);
                       setShowCardCheckout(true);
                     }
                   } else {
@@ -1768,7 +1769,7 @@ function App() {
                 )}
               </div>
 
-              <button className="btn-primary" style={{ width: '100%', padding: '0.9rem' }} 
+              <button className="btn-primary" style={{ width: '100%', padding: '0.9rem', opacity: (!selectedCard || isCardLoading) ? 0.6 : 1, cursor: (!selectedCard || isCardLoading) ? 'not-allowed' : 'pointer' }} 
                 onClick={() => {
                   if (!selectedCard) return alert('Selecione um cartão para continuar.');
                   setShowCardCheckout(false);
