@@ -826,7 +826,7 @@ function App() {
                     ))}
 
                     {/* Auto-completar quando tem busca */}
-                    {searchTerm.trim() && products
+                    {searchTerm.trim() && catalog
                       .filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
                       .slice(0, 5)
                       .map((p, i) => (
