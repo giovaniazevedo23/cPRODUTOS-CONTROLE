@@ -1517,7 +1517,7 @@ function App() {
       {/* ===== Modal: Pagamento Real com Cartão (Mercado Pago SDK) ===== */}
       {showMpCardForm && (
         <div className="modal-overlay" style={{ zIndex: 1060 }}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '480px' }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>💳 Pagamento com Cartão</h2>
               <button className="close-btn" onClick={() => setShowMpCardForm(false)} disabled={isCardLoading}>×</button>
@@ -1610,7 +1610,7 @@ function App() {
       {/* ===== Modal: Gerenciar Pagamentos ===== */}
       {showPaymentModal && (
         <div className="modal-overlay" style={{ zIndex: 1050 }}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '480px' }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>💳 Meus Pagamentos</h2>
               <button className="close-btn" onClick={() => { setShowPaymentModal(false); setShowAddCardForm(false); }}>×</button>
@@ -1711,7 +1711,7 @@ function App() {
       {/* ===== Modal: Checkout com Cartão ===== */}
       {showCardCheckout && (
         <div className="modal-overlay" style={{ zIndex: 1050 }}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '460px' }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '460px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>💳 Pagar com Cartão</h2>
               <button className="close-btn" onClick={() => setShowCardCheckout(false)}>×</button>
