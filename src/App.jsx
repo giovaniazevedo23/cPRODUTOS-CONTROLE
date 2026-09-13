@@ -330,8 +330,8 @@ function App() {
                 <p style="margin: 5px 0 0 0;">Pedido GESTE</p>
               </div>
               <div style="padding: 20px;">
-                <p>Olá <strong>${customerInfo.name || 'Cliente'}</strong>,</p>
-                <p>Seu pagamento foi aprovado com sucesso! Abaixo estão os detalhes do seu pedido:</p>
+                <p>Olá <strong>${customerInfo.name || 'Cliente'}</strong>, estamos muito felizes pela sua confiança em nossa loja <strong>GESTE</strong>.</p>
+                <p>Segue abaixo o seu recibo referente à compra efetuada:</p>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                   <thead>
                     <tr style="background-color: #f3f4f6; text-align: left;">
@@ -353,9 +353,11 @@ function App() {
                 <div style="margin-top: 20px; text-align: right; font-size: 18px;">
                   <strong>Total: <span style="color: #f97316;">R$ ${total.toFixed(2).replace('.',',')}</span></strong>
                 </div>
-                <div style="margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center;">
+                <div style="margin-top: 30px; font-size: 12px; color: #6b7280; text-align: center;">
                   <p>ID do Pedido: ${deal.id}</p>
                   <p>Data: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 15px 0;" />
+                  <p>Todos os direitos reservados - GESTE &copy; ${new Date().getFullYear()}</p>
                 </div>
               </div>
             </div>
@@ -369,7 +371,9 @@ function App() {
               subject: `Seu Recibo GESTE - Pedido #${deal.id.slice(-6)}`,
               html_message: receiptHtml
             },
-            'mNLHg4WMPI_KmzA8c'
+            {
+              publicKey: 'mNLHg4WMPI_KmzA8c'
+            }
           );
         } catch (emailErr) {
           console.error("Erro ao agendar envio de email:", emailErr);
