@@ -466,7 +466,7 @@ function App() {
                   transaction_amount: Number(amount),
                   token,
                   description: 'Pedido GESTE',
-                  installments: Number(inst) || 1,
+                  installments: Number(inst) || installments || 1,
                   payment_method_id: paymentMethodId,
                   issuer_id: issuerId ? Number(issuerId) : undefined,
                   payer: {
@@ -1484,7 +1484,14 @@ function App() {
               <button className="btn-primary" 
                 onClick={() => {
                   if (checkoutMethod === 'Cartão de Crédito') {
-                    setShowMpCardForm(true);
+                    if (savedCards.length === 0) {
+                      if (window.confirm('Você não tem cartões salvos. Deseja ir para Pagamentos para adicionar um?')) {
+                        setIsCartOpen(false);
+                        setShowPaymentModal(true);
+                      }
+                    } else {
+                      setShowCardCheckout(true);
+                    }
                   } else {
                     handleCheckout();
                   }
@@ -1518,6 +1525,13 @@ function App() {
             <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               🔒 Dados protegidos pelo Mercado Pago — não compartilhados conosco.
             </div>
+
+            {selectedCard && (
+              <div style={{ background: '#f5f5f5', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: '4px solid var(--primary-color)' }}>
+                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Pagar com {selectedCard.brand} final {selectedCard.last4}</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Por segurança, insira os dados do cartão selecionado para validar a compra.</span>
+              </div>
+            )}
 
             <form id="mp-card-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
@@ -1561,7 +1575,7 @@ function App() {
                 <div id="mp-issuer"></div>
               </div>
 
-              <div>
+              <div style={{ display: 'none' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Parcelas</label>
                 <div id="mp-installments" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
               </div>
@@ -1754,8 +1768,14 @@ function App() {
                 )}
               </div>
 
-              <button className="btn-primary" style={{ width: '100%', padding: '0.9rem' }} onClick={handleCardCheckout} disabled={!selectedCard || isCardLoading}>
-                {isCardLoading ? 'Processando...' : '✅ Confirmar Pagamento'}
+              <button className="btn-primary" style={{ width: '100%', padding: '0.9rem' }} 
+                onClick={() => {
+                  if (!selectedCard) return alert('Selecione um cartão para continuar.');
+                  setShowCardCheckout(false);
+                  setShowMpCardForm(true);
+                }} 
+                disabled={!selectedCard || isCardLoading}>
+                Pagar com este cartão
               </button>
             </div>
           </div>
