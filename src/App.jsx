@@ -4,6 +4,7 @@ import './App.css';
 import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
+import emailjs from '@emailjs/browser';
 
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
@@ -360,13 +361,16 @@ function App() {
             </div>
           `;
           
-          await addDoc(collection(db, 'mail'), {
-            to: customerEmail,
-            message: {
+          await emailjs.send(
+            'service_n2k30o9',
+            'template_tht2nks',
+            {
+              to_email: customerEmail,
               subject: `Seu Recibo GESTE - Pedido #${deal.id.slice(-6)}`,
-              html: receiptHtml
-            }
-          });
+              html_message: receiptHtml
+            },
+            'mNLHg4WMPI_KmzA8c'
+          );
         } catch (emailErr) {
           console.error("Erro ao agendar envio de email:", emailErr);
         }
