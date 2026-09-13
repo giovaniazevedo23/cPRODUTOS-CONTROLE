@@ -5,11 +5,7 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-import profileIcon from './assets/profile_icon.png';
-import shoppingBagIcon from './assets/shopping_bag_icon.png';
-import boxIcon from './assets/box_icon.png';
-import supportIcon from './assets/support_icon.png';
-import notificationIcon from './assets/notification_icon.png';
+import { Bell, Headset, User, ShoppingBag, Package } from 'lucide-react';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -804,7 +800,7 @@ function App() {
             onClick={() => setShowMyProfile(true)}
             title="Notificações"
           >
-            <img src={notificationIcon} alt="Notificações" style={{ width: '24px', height: '24px' }} />
+            <Bell size={24} color="#333" />
             {hasNfeNotification && (
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }}></span>
             )}
@@ -871,7 +867,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <img src={profileIcon} alt="Perfil" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Perfil
+                  <User size={18} style={{ opacity: 0.7 }} /> Perfil
                 </button>
                 <button 
                   onClick={() => { setShowMyProfile(true); setIsUserMenuOpen(false); }}
@@ -883,7 +879,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <img src={shoppingBagIcon} alt="Compras" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Compras
+                  <ShoppingBag size={18} style={{ opacity: 0.7 }} /> Compras
                   {hasUnreadClient && <span style={{ width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', marginLeft: 'auto' }}></span>}
                 </button>
                 <button 
@@ -908,7 +904,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <img src={boxIcon} alt="Meus Pedidos" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Meus Pedidos
+                  <Package size={18} style={{ opacity: 0.7 }} /> Meus Pedidos
                 </button>
                 <button 
                   onClick={() => { setShowPaymentModal(true); setIsUserMenuOpen(false); }}
@@ -932,7 +928,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <img src={supportIcon} alt="Suporte" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Suporte
+                  <Headset size={18} style={{ opacity: 0.7 }} /> Suporte
                 </button>
                 <div style={{ height: '1px', background: '#eee', margin: '0.25rem 0' }} />
                 <button 
