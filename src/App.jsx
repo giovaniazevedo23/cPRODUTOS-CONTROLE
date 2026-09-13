@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart } from 'lucide-react';
+import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart, Search } from 'lucide-react';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -347,7 +347,7 @@ function App() {
       date: new Date().toISOString(),
       companyCnpj: customerInfo.cnpj,
       customerCpf: customerInfo.cpf,
-      source: 'vitrine',
+      source: 'vitrine', viewedByAdmin: false, viewedByAdmin: false,
       messages: [],
       shippingStatus: 'Recebido',
       paymentMethod: checkoutMethod
@@ -420,13 +420,13 @@ function App() {
                       <tr>
                         <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${c.name}</td>
                         <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${c.cartQuantity}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">R$ ${(c.price * c.cartQuantity).toFixed(2).replace('.',',')}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">R$ ${(c.price * c.cartQuantity).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}).replace('.',',')}</td>
                       </tr>
                     `).join('')}
                   </tbody>
                 </table>
                 <div style="margin-top: 20px; text-align: right; font-size: 18px;">
-                  <strong>Total: <span style="color: #f97316;">R$ ${total.toFixed(2).replace('.',',')}</span></strong>
+                  <strong>Total: <span style="color: #f97316;">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}).replace('.',',')}</span></strong>
                 </div>
                 <div style="margin-top: 30px; font-size: 12px; color: #6b7280; text-align: center;">
                   <p>ID do Pedido: ${deal.id}</p>
@@ -563,7 +563,7 @@ function App() {
       const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
 
       const form = mp.cardForm({
-        amount: total.toFixed(2),
+        amount: total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
         iframe: true,
         style: {
           base: {
@@ -1048,7 +1048,7 @@ function App() {
                   }}
                   style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', borderRadius: '4px', border: '1px solid #ccc', outline: 'none', fontSize: '1rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,.1)' }}
                 />
-                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '1.2rem' }}>🔍</span>
+                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, display: 'flex', alignItems: 'center' }}><Search size={20} color="var(--text-secondary)" /></span>
                 
                 {showSearchHistory && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '0 0 4px 4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 110, overflow: 'hidden' }}>
@@ -1083,7 +1083,7 @@ function App() {
                           onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                           onMouseOut={(e) => e.target.style.background = '#fff'}
                         >
-                          <span style={{ opacity: 0.4, fontSize: '1.2rem' }}>🔍</span> 
+                          <span style={{ opacity: 0.4, fontSize: '1.2rem' }}><Search size={18} color="var(--text-secondary)" /></span> 
                           <span>
                             {(p.name || '').toLowerCase().split(searchTerm.toLowerCase()).map((part, index, array) => (
                               <span key={index}>
@@ -1119,7 +1119,7 @@ function App() {
               <div style={{ marginBottom: '2rem', background: '#fff', borderRadius: '8px', padding: '1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                   <h2 style={{ margin: 0, color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.2rem', textTransform: 'uppercase' }}>
-                    Ofertas ⏰ Relâmpago
+                    Ofertas  Relâmpago
                   </h2>
                   
                   {(() => {
@@ -1153,7 +1153,7 @@ function App() {
                   )}
                   
                   <div style={{ padding: '0.5rem 0', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                    <div style={{ color: '#ff7700', fontWeight: 'bold', fontSize: '1.2rem' }}>R$ {Number(item.price).toFixed(2)}</div>
+                    <div style={{ color: '#ff7700', fontWeight: 'bold', fontSize: '1.2rem' }}>R$ {Number(item.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     <div style={{ background: 'linear-gradient(90deg, #ff4e00 0%, #ff9500 100%)', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', borderRadius: '10px', padding: '0.2rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
                       🔥 {item.sold || Math.floor(Math.random() * 50 + 5)} ITENS VENDIDOS
                     </div>
@@ -1251,6 +1251,11 @@ function App() {
                     Frete Grátis
                   </div>
                 )}
+                {item.quantity <= 15 && item.quantity > 0 && (
+                  <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--danger)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10 }}>
+                    🔥 Últimas Unidades
+                  </div>
+                )}
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.name} style={{ width: '100%', height: '150px', objectFit: 'contain', borderRadius: '0.5rem', background: '#fff' }} />
                 ) : (
@@ -1278,20 +1283,20 @@ function App() {
                   {item.isOffer ? (
                     <div style={{ marginTop: '0.5rem' }}>
                       <div style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.85rem' }}>
-                        R$ {Number(item.originalPrice).toFixed(2)}
+                        R$ {Number(item.originalPrice).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </div>
                       <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        R$ {Number(item.price).toFixed(2)}
+                        R$ {Number(item.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#00a650' }}>OFERTA DO DIA</span>
                       </div>
                     </div>
                   ) : (
                     <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.5rem' }}>
-                      R$ {Number(item.price).toFixed(2)}
+                      R$ {Number(item.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                     </div>
                   )}
                   <div style={{ fontSize: '0.85rem', color: '#00a650', marginTop: '0.1rem', fontWeight: '500' }}>
-                    em 10x de R$ {(Number(item.price) / 10).toFixed(2)} sem juros
+                    em 10x de R$ {(Number(item.price) / 10).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} sem juros
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{item.sold || 0} vendidos</div>
                 </div>
@@ -1417,9 +1422,9 @@ function App() {
                       <tr key={i} style={{ borderBottom: '1px solid var(--glass-border)' }}>
                         <td style={{ padding: '0.5rem' }}>{c.name}</td>
                         <td style={{ padding: '0.5rem', textAlign: 'center' }}>{c.cartQuantity}</td>
-                        <td style={{ padding: '0.5rem', textAlign: 'center' }}>R$ {(c.price * c.cartQuantity).toFixed(2)}</td>
+                        <td style={{ padding: '0.5rem', textAlign: 'center' }}>R$ {(c.price * c.cartQuantity).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                          <button style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }} onClick={() => setCart(cart.filter(item => item.sku !== c.sku))}>🗑️</button>
+                          <button style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }} onClick={() => setCart(cart.filter(item => item.sku !== c.sku))}>Remover</button>
                         </td>
                       </tr>
                     ))}
@@ -1494,13 +1499,13 @@ function App() {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Produtos ({cart.reduce((a,c) => a + c.cartQuantity, 0)})</span>
-                    <span>R$ {cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0).toFixed(2)}</span>
+                    <span>R$ {cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                   
                   {appliedCoupon && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#00a650' }}>
                       <span>Desconto do Cupom ({appliedCoupon.discount}%)</span>
-                      <span>- R$ {(cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0) * appliedCoupon.discount / 100).toFixed(2)}</span>
+                      <span>- R$ {(cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0) * appliedCoupon.discount / 100).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                   )}
 
@@ -1510,7 +1515,7 @@ function App() {
                       R$ {(() => {
                         const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
                         const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
-                        return (subtotal - discount).toFixed(2);
+                        return (subtotal - discount).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                       })()}
                     </span>
                   </div>
@@ -1627,7 +1632,7 @@ function App() {
               <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '0.75rem 1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600' }}>
                   <span>Total da compra</span>
-                  <span style={{ color: 'var(--primary-color)' }}>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toFixed(2)}</span>
+                  <span style={{ color: 'var(--primary-color)' }}>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
               </div>
 
@@ -1792,7 +1797,7 @@ function App() {
                   <select className="input-primary" value={installments} onChange={e => setInstallments(Number(e.target.value))}>
                     {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => {
                       const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
-                      const val = (total / n).toFixed(2);
+                      const val = (total / n).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                       return <option key={n} value={n}>{n}x de R$ {val}{n === 1 ? ' sem juros' : ''}</option>;
                     })}
                   </select>
@@ -1802,12 +1807,12 @@ function App() {
               <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                   <span>Total</span>
-                  <strong>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toFixed(2)}</strong>
+                  <strong>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
                 </div>
                 {selectedCard?.type === 'credit' && installments > 1 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#999', marginTop: '4px' }}>
                     <span>{installments}x de</span>
-                    <span>R$ {(cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0) / installments).toFixed(2)}</span>
+                    <span>R$ {(cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0) / installments).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                 )}
               </div>
@@ -2015,7 +2020,7 @@ function App() {
                       <div style={{ width: '100px', height: '100px', background: 'var(--background-color)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', marginBottom: '1rem' }}>📦</div>
                     )}
                     <div style={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', marginBottom: '0.5rem' }}>{item.name}</div>
-                    <div style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>R$ {Number(item.price).toFixed(2)}</div>
+                    <div style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>R$ {Number(item.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                   </div>
                 ))}
               </div>
@@ -2062,7 +2067,7 @@ function App() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--glass-border)', paddingTop: '0.5rem' }}>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vendedor: {deal.salesperson || 'N/A'}</span>
-                      <strong style={{ color: 'var(--primary-color)' }}>R$ {deal.value.toFixed(2)}</strong>
+                      <strong style={{ color: 'var(--primary-color)' }}>R$ {deal.value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
                     </div>
 
                     {viewingDeal === deal.id && deal.status !== 'Perdido' && (
@@ -2244,7 +2249,7 @@ function App() {
                               <div style={{ fontSize: '0.8rem', color: '#757575' }}>x{prod.quantity}</div>
                             </div>
                             <div style={{ fontWeight: 'bold', color: '#ee4d2d' }}>
-                              R$ {Number(prod.price || 0).toFixed(2)}
+                              R$ {Number(prod.price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                             </div>
                           </div>
                         );
@@ -2254,7 +2259,7 @@ function App() {
                     {/* Footer / Total */}
                     <div style={{ padding: '1rem', borderTop: '1px solid #eee', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{ fontSize: '0.9rem', color: '#333' }}>Total do Pedido:</span>
-                      <span style={{ fontSize: '1.25rem', color: '#ee4d2d', fontWeight: 'bold' }}>R$ {Number(deal.value).toFixed(2)}</span>
+                      <span style={{ fontSize: '1.25rem', color: '#ee4d2d', fontWeight: 'bold' }}>R$ {Number(deal.value).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                     
                     {/* Actions */}
@@ -2283,7 +2288,7 @@ function App() {
                           style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold' }}
                           onClick={() => { setShowMeusPedidosModal(false); setInternalChat({ dealId: deal.id, msg: '' }); }}
                         >
-                          Falar Com Vendedor
+                          Abrir Atendimento (Chat)
                         </button>
                         <button 
                           style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -2483,10 +2488,10 @@ function App() {
                 <p style={{ margin: '0 0 0.25rem 0', color: '#3483fa', fontSize: '0.9rem', fontWeight: '500' }}>Chegará em até {viewingProduct.deliveryDays || 3} dias</p>
                 
                 <div style={{ margin: '1rem 0 0 0', fontSize: '1.8rem', fontWeight: 'bold', color: viewingProduct.isOffer ? 'var(--danger)' : 'var(--primary-color)' }}>
-                  R$ {Number(viewingProduct.price).toFixed(2)}
+                  R$ {Number(viewingProduct.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </div>
                 <div style={{ fontSize: '0.95rem', color: '#00a650', marginBottom: '1rem', fontWeight: '500' }}>
-                  em 10x de R$ {(Number(viewingProduct.price) / 10).toFixed(2)} sem juros
+                  em 10x de R$ {(Number(viewingProduct.price) / 10).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} sem juros
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
@@ -2620,7 +2625,7 @@ function App() {
           <div className="modal-content glass-panel" style={{ maxWidth: '400px', textAlign: 'center' }}>
             <h2 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Pague via PIX</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Escaneie o QR Code abaixo com o aplicativo do seu banco para finalizar o pedido no valor de <strong>R$ {pixPayment.total.toFixed(2)}</strong>.
+              Escaneie o QR Code abaixo com o aplicativo do seu banco para finalizar o pedido no valor de <strong>R$ {pixPayment.total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>.
             </p>
             <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', display: 'inline-block', marginBottom: '1rem' }}>
               <img src={`data:image/jpeg;base64,${pixPayment.qrCodeBase64}`} alt="QR Code PIX" style={{ width: '200px', height: '200px' }} />
@@ -2729,7 +2734,7 @@ function App() {
         color: 'var(--text-secondary)',
         borderTop: '1px solid var(--glass-border)'
       }}>
-        © 2026 Direitos Reservados - Feito com ❤️ pela equipe GESTE
+        © 2026 Direitos Reservados GESTE
       </footer>
 
     </>
