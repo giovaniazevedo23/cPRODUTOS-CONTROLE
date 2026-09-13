@@ -36,7 +36,7 @@ function Countdown({ endsAt }) {
 function App() {
   const [customerInfo, setCustomerInfo] = useState(() => JSON.parse(localStorage.getItem('vitrine_customer')) || null);
   const [loginMode, setLoginMode] = useState('login'); // 'login' | 'register'
-  const [loginForm, setLoginForm] = useState({ name: '', cnpj: '', phone: '', cpf: '' });
+  const [loginForm, setLoginForm] = useState({ name: '', cnpj: '', phone: '', cpf: '', email: '' });
   
   const [catalog, setCatalog] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -94,6 +94,8 @@ function App() {
   const [viewedProductsHistory, setViewedProductsHistory] = useState(() => JSON.parse(localStorage.getItem('vitrine_viewed_history')) || []);
   const [showViewedHistoryModal, setShowViewedHistoryModal] = useState(false);
   const [showOpinionsModal, setShowOpinionsModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportMessage, setSupportMessage] = useState('');
 
   const hasUnreadClient = deals.some(d => {
     if (d.messages && d.messages.length > 0) {
@@ -130,8 +132,6 @@ function App() {
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    // Reviews can be fetched globally or by company? Let's just fetch all or filter by seller name later,
-    // or we can add companyCnpj to reviews too.
     const unsubReviews = onSnapshot(collection(db, 'reviews'), (snap) => {
       setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
@@ -152,7 +152,9 @@ function App() {
   }, [customerInfo]);
 
   useEffect(() => {
-    if (customerInfo) localStorage.setItem('vitrine_customer', JSON.stringify(customerInfo));
+    if (customerInfo?.email) {
+      localStorage.setItem('vitrine_customer', JSON.stringify(customerInfo));
+    }
   }, [customerInfo]);
 
   useEffect(() => {
@@ -189,22 +191,41 @@ function App() {
         alert("Cliente não encontrado. Por favor, crie uma conta.");
       }
     } else {
-      if (loginForm.name && loginForm.cnpj && loginForm.phone) {
+      if (loginForm.name && loginForm.cnpj && loginForm.phone && loginForm.email) {
         const customerObj = {
           name: loginForm.name,
           cpf: loginForm.cpf,
           cnpj: loginForm.cnpj,
           phone: loginForm.phone,
+          email: loginForm.email,
           createdAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'customers', cpfClean), customerObj);
         setCustomerInfo(customerObj);
         setProfileData({ birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '' });
+        
+        try {
+          await emailjs.send(
+            'service_n2k30o9',
+            'template_tht2nks',
+            {
+              to_email: loginForm.email,
+              subject: 'Bem-vindo(a) à GESTE!',
+              html_message: `<p>Olá <strong>${loginForm.name}</strong>, estamos muito felizes com sua presença! Bem-vindo(a) à GESTE.</p>`
+            },
+            {
+              publicKey: 'mNLHg4WMPI_KmzA8c'
+            }
+          );
+        } catch (emailErr) {
+          console.error("Erro ao enviar email de boas-vindas:", emailErr);
+        }
+      } else {
+        alert("Por favor, preencha todos os campos obrigatórios.");
       }
     }
   };
 
-  // Carregar profile data existente
   useEffect(() => {
     if (customerInfo && customerInfo.cpf) {
       setProfileData({
@@ -271,7 +292,7 @@ function App() {
     setIsCartOpen(true);
   };
 
-  const finalizeCheckout = async (customerEmail = null) => {
+  const finalizeCheckout = async () => {
     if (cart.length === 0) return;
     
     const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
@@ -297,7 +318,6 @@ function App() {
     try {
       await setDoc(doc(db, 'deals', deal.id), deal);
       
-      // Atualiza os produtos adicionando as quantidades vendidas (sold)
       for (const item of cart) {
         try {
           const itemRef = doc(db, 'items', item.id);
@@ -310,7 +330,6 @@ function App() {
         }
       }
 
-      // Atualiza o uso do cupom se aplicável
       if (appliedCoupon) {
         try {
           const couponRef = doc(db, 'coupons', appliedCoupon.id);
@@ -321,7 +340,7 @@ function App() {
         } catch (e) { console.error('Erro ao atualizar cupom', e); }
       }
 
-      if (customerEmail) {
+      if (customerInfo && customerInfo.email) {
         try {
           const receiptHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -367,7 +386,7 @@ function App() {
             'service_n2k30o9',
             'template_tht2nks',
             {
-              to_email: customerEmail,
+              to_email: customerInfo.email,
               subject: `Seu Recibo GESTE - Pedido #${deal.id.slice(-6)}`,
               html_message: receiptHtml
             },
@@ -376,7 +395,7 @@ function App() {
             }
           );
         } catch (emailErr) {
-          console.error("Erro ao agendar envio de email:", emailErr);
+          console.error("Erro ao enviar recibo por email:", emailErr);
         }
       }
 
@@ -411,7 +430,7 @@ function App() {
             description: "Pedido GESTE",
             payment_method_id: "pix",
             payer: {
-              email: "cliente@suamarca.com"
+              email: (customerInfo ? customerInfo.email : null) || "cliente@suamarca.com"
             }
           })
         });
@@ -466,12 +485,10 @@ function App() {
     return () => clearInterval(intervalId);
   }, [pixPayment]);
 
-  // ===== Mercado Pago Card SDK =====
   const MP_PUBLIC_KEY = 'APP_USR-d3ac1069-b68c-4bc9-ac8a-45c9993f0e84';
 
   useEffect(() => {
     if (!showMpCardForm) {
-      // Unmount previous form if exists
       if (mpCardFormRef.current) {
         try { mpCardFormRef.current.unmount(); } catch(e) {}
         mpCardFormRef.current = null;
@@ -507,8 +524,7 @@ function App() {
           issuer: { id: 'mp-issuer', label: 'Bandeira' },
           installments: { id: 'mp-installments', label: 'Parcelas' },
           identificationType: { id: 'mp-identification-type', label: 'Tipo' },
-          identificationNumber: { id: 'mp-identification-number', placeholder: 'CPF/CNPJ' },
-          cardholderEmail: { id: 'mp-cardholder-email', placeholder: 'Email para recibo' },
+          identificationNumber: { id: 'mp-identification-number', placeholder: 'CPF/CNPJ' }
         },
         callbacks: {
           onFormMounted: (error) => {
@@ -519,7 +535,7 @@ function App() {
             event.preventDefault();
             setIsCardLoading(true);
             try {
-              const { paymentMethodId, issuerId, cardholderEmail, amount, token, installments: inst, identificationNumber, identificationType } = form.getCardFormData();
+              const { paymentMethodId, issuerId, amount, token, installments: inst, identificationNumber, identificationType } = form.getCardFormData();
               const response = await fetch('/mp-api/v1/payments', {
                 method: 'POST',
                 headers: {
@@ -535,7 +551,7 @@ function App() {
                   payment_method_id: paymentMethodId,
                   issuer_id: issuerId ? Number(issuerId) : undefined,
                   payer: {
-                    email: cardholderEmail,
+                    email: (customerInfo ? customerInfo.email : null) || "cliente@suamarca.com",
                     identification: { type: identificationType, number: identificationNumber }
                   }
                 })
@@ -543,11 +559,11 @@ function App() {
               const data = await response.json();
               if (data.status === 'approved') {
                 setShowMpCardForm(false);
-                await finalizeCheckout(cardholderEmail);
+                await finalizeCheckout();
               } else if (data.status === 'in_process') {
                 setShowMpCardForm(false);
                 alert('Pagamento em análise! Seu pedido será confirmado em breve.');
-                await finalizeCheckout(cardholderEmail);
+                await finalizeCheckout();
               } else {
                 alert('Pagamento não aprovado: ' + (data.status_detail || data.message || 'Verifique os dados e tente novamente.'));
               }
@@ -575,70 +591,6 @@ function App() {
       }
     };
   }, [showMpCardForm]);
-
-  // ===== Card Management Functions =====
-  const formatCardNumber = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const getCardBrand = (number) => {
-    const n = number.replace(/\s/g, '');
-    if (/^4/.test(n)) return { brand: 'Visa', icon: '💳' };
-    if (/^5[1-5]/.test(n)) return { brand: 'Mastercard', icon: '💳' };
-    if (/^3[47]/.test(n)) return { brand: 'Amex', icon: '💳' };
-    if (/^6/.test(n)) return { brand: 'Elo', icon: '💳' };
-    return { brand: 'Cartão', icon: '💳' };
-  };
-
-  const handleSaveCard = (e) => {
-    e.preventDefault();
-    const digits = cardForm.number.replace(/\s/g, '');
-    if (digits.length < 16) return alert('Número do cartão inválido.');
-    const { brand } = getCardBrand(digits);
-    const newCard = {
-      id: Date.now().toString(),
-      last4: digits.slice(-4),
-      brand,
-      holder: cardForm.holder,
-      expiry: cardForm.expiry,
-      type: cardForm.type,
-      bin: digits.slice(0, 6),
-    };
-    const updated = [...savedCards, newCard];
-    setSavedCards(updated);
-    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updated));
-    setCardForm({ number: '', holder: '', expiry: '', cvv: '', type: 'credit' });
-    setShowAddCardForm(false);
-    alert('Cartão salvo com sucesso!');
-  };
-
-  const handleDeleteCard = (id) => {
-    if (!window.confirm('Remover este cartão?')) return;
-    const updated = savedCards.filter(c => c.id !== id);
-    setSavedCards(updated);
-    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updated));
-  };
-
-  const handleCardCheckout = async () => {
-    if (!selectedCard) return alert('Selecione um cartão para continuar.');
-    setIsCardLoading(true);
-    try {
-      const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
-      const installmentValue = (total / installments).toFixed(2);
-      
-      // Finaliza o pedido registrando no Firebase sem processar o cartão real por agora
-      // (a tokenização real exige SDK do MP que só funciona no frontend com campos PCI-compliant)
-      await finalizeCheckout();
-      setShowCardCheckout(false);
-      setSelectedCard(null);
-      setInstallments(1);
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao processar pagamento.');
-    }
-    setIsCardLoading(false);
-  };
 
   const handleSendInternalMessage = async (e) => {
     e.preventDefault();
@@ -675,74 +627,26 @@ function App() {
     }
   };
 
-  const handleSubmitReview = async (e) => {
+  const handleSendSupportMessage = async (e) => {
     e.preventDefault();
-    if (!reviewData.salesperson) return;
-    
-    const reviewId = Date.now().toString();
-    const review = {
-      id: reviewId,
-      salesperson: reviewData.salesperson,
-      client: customerInfo.name,
-      stars: Number(reviewData.stars),
-      comment: reviewData.comment,
-      date: new Date().toISOString()
-    };
-    
+    if (!supportMessage.trim()) return;
     try {
-      await setDoc(doc(db, 'reviews', reviewId), review);
-      setShowReviewModal(false);
-      alert('Obrigado pela sua avaliação!');
-    } catch (e) {
-      console.error(e);
-      alert('Erro ao enviar avaliação.');
-    }
-  };
-
-  const handleProductReviewSubmit = async (e) => {
-    e.preventDefault();
-    if (!reviewForm.productId || !reviewForm.dealId) return;
-    
-    const reviewId = Date.now().toString();
-    try {
-      await setDoc(doc(db, 'product_reviews', reviewId), {
-        id: reviewId,
-        dealId: reviewForm.dealId,
-        productId: reviewForm.productId,
-        productName: reviewForm.productName || 'Produto',
-        companyCnpj: customerInfo.cnpj,
-        customerName: customerInfo.name,
-        customerCpf: customerInfo.cpf,
-        stars: Number(reviewForm.stars),
-        comment: reviewForm.comment,
-        photo: reviewForm.photo || '', // base64 placeholder
-        date: new Date().toISOString()
-      });
-      setReviewForm(null);
-      alert('Avaliação do produto enviada com sucesso!');
+      await emailjs.send(
+        'service_n2k30o9',
+        'template_tht2nks',
+        {
+          to_email: 'suporte@geste.com',
+          subject: `Suporte GESTE - ${customerInfo.name} (${customerInfo.cpf})`,
+          html_message: `<p><strong>Cliente:</strong> ${customerInfo.name}</p><p><strong>E-mail:</strong> ${customerInfo.email}</p><p><strong>WhatsApp:</strong> ${customerInfo.phone}</p><p><strong>Mensagem:</strong> ${supportMessage}</p>`
+        },
+        { publicKey: 'mNLHg4WMPI_KmzA8c' }
+      );
+      alert('Mensagem de suporte enviada com sucesso! Entraremos em contato em breve.');
+      setSupportMessage('');
+      setShowSupportModal(false);
     } catch (err) {
       console.error(err);
-      alert('Erro ao enviar avaliação do produto.');
-    }
-  };
-
-  const handleSellerReview = async (e) => {
-    e.preventDefault();
-    try {
-      await addDoc(collection(db, 'seller_reviews'), {
-        dealId: sellerReviewForm.dealId,
-        salesperson: sellerReviewForm.salesperson,
-        customerName: customerInfo.name,
-        customerCpf: customerInfo.cpf,
-        stars: Number(sellerReviewForm.stars),
-        comment: sellerReviewForm.comment,
-        date: new Date().toISOString()
-      });
-      setSellerReviewForm(null);
-      alert('Avaliação do vendedor enviada com sucesso!');
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao enviar avaliação do vendedor.');
+      alert('Erro ao enviar mensagem de suporte.');
     }
   };
 
@@ -809,6 +713,16 @@ function App() {
                     placeholder="Ex: João da Silva" 
                     value={loginForm.name}
                     onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label>E-mail</label>
+                  <input 
+                    type="email" 
+                    required 
+                    placeholder="seu.email@exemplo.com"
+                    value={loginForm.email}
+                    onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
                   />
                 </div>
                 <div className="form-group" style={{ marginBottom: '2rem' }}>
@@ -1117,6 +1031,9 @@ function App() {
               </div>
             )}
             
+            <button className="btn-secondary" onClick={() => setShowSupportModal(true)} style={{ background: '#333', color: '#fff', border: 'none' }}>
+              🎧 Suporte
+            </button>
             <button className="btn-secondary" onClick={() => setIsCartOpen(true)} style={{ position: 'relative' }}>
               🛒 Ver Carrinho
               {cart.length > 0 && (
@@ -1630,11 +1547,6 @@ function App() {
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CPF/CNPJ</label>
                   <input type="text" id="mp-identification-number" className="input-primary" style={{ width: '100%', height: '46px' }} />
                 </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>E-mail para recibo</label>
-                <input type="email" id="mp-cardholder-email" className="input-primary" style={{ width: '100%', height: '46px' }} />
               </div>
 
               <div style={{ display: 'none' }}>
@@ -2677,6 +2589,65 @@ function App() {
             <div style={{ marginTop: '2rem' }}>
               <button className="btn-secondary" onClick={() => setPixPayment(null)}>Cancelar Operação</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Modal */}
+      {showSupportModal && (
+        <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, justifyContent: 'center', alignItems: 'center' }} onClick={(e) => e.target.className.includes('modal-overlay') && setShowSupportModal(false)}>
+          <div className="modal-content glass-panel" style={{ width: '90%', maxWidth: '500px', padding: '2rem', background: '#fff', borderRadius: '12px' }}>
+            <h2 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Central de Suporte</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              Tem alguma dúvida ou precisa de ajuda? Envie sua mensagem e entraremos em contato.
+            </p>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await emailjs.send(
+                  'service_n2k30o9',
+                  'template_tht2nks',
+                  {
+                    to_email: 'geste.suporte@gmail.com',
+                    subject: 'Nova Mensagem de Suporte - GESTE',
+                    html_message: `
+                      <h3>Nova mensagem de suporte</h3>
+                      <p><strong>Cliente:</strong> ${customerInfo?.name || 'Não identificado'}</p>
+                      <p><strong>E-mail:</strong> ${customerInfo?.email || 'Não informado'}</p>
+                      <p><strong>Telefone:</strong> ${customerInfo?.phone || 'Não informado'}</p>
+                      <hr />
+                      <p><strong>Mensagem:</strong></p>
+                      <p>${supportMessage.replace(/\n/g, '<br/>')}</p>
+                    `
+                  },
+                  {
+                    publicKey: 'mNLHg4WMPI_KmzA8c'
+                  }
+                );
+                alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+                setShowSupportModal(false);
+                setSupportMessage('');
+              } catch (err) {
+                console.error(err);
+                alert('Erro ao enviar mensagem. Tente novamente mais tarde.');
+              }
+            }}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Sua Mensagem</label>
+                <textarea 
+                  required 
+                  rows="5"
+                  placeholder="Descreva sua dúvida ou problema..."
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowSupportModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary">Enviar Mensagem</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
