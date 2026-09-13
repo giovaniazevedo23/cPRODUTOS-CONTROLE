@@ -433,6 +433,12 @@ function App() {
       const form = mp.cardForm({
         amount: total.toFixed(2),
         iframe: true,
+        style: {
+          base: {
+            fontSize: '15px',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          }
+        },
         form: {
           id: 'mp-card-form',
           cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
@@ -1534,42 +1540,42 @@ function App() {
               </div>
             )}
 
-            <form id="mp-card-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form id="mp-card-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Número do Cartão</label>
-                <div id="mp-card-number" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                <div id="mp-card-number" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
               </div>
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Nome do Titular</label>
-                <div id="mp-cardholder-name" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                <div id="mp-cardholder-name" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Validade</label>
-                  <div id="mp-expiration-date" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                  <div id="mp-expiration-date" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CVV</label>
-                  <div id="mp-security-code" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                  <div id="mp-security-code" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tipo de Documento</label>
-                  <div id="mp-identification-type" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                  <div id="mp-identification-type" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CPF/CNPJ</label>
-                  <div id="mp-identification-number" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                  <div id="mp-identification-number" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
                 </div>
               </div>
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>E-mail para recibo</label>
-                <div id="mp-cardholder-email" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                <div id="mp-cardholder-email" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
               </div>
 
               <div style={{ display: 'none' }}>
@@ -1578,7 +1584,7 @@ function App() {
 
               <div style={{ display: 'none' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Parcelas</label>
-                <div id="mp-installments" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                <div id="mp-installments" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
               </div>
 
               <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '0.75rem 1rem' }}>
