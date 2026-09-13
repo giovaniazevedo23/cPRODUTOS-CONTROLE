@@ -330,10 +330,34 @@ function App() {
     setIsCartOpen(true);
   };
 
+  const handleSaveCard = (e) => {
+    e.preventDefault();
+    const newCard = {
+      id: Date.now().toString(),
+      ...cardForm,
+      last4: cardForm.number.slice(-4),
+      brand: cardForm.number.startsWith('4') ? 'VISA' : 'MASTERCARD'
+    };
+    const updatedCards = [...savedCards, newCard];
+    setSavedCards(updatedCards);
+    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updatedCards));
+    setShowAddCardForm(false);
+    setCardForm({ type: 'credit', number: '', holder: '', expiry: '', cvv: '' });
+  };
+
+  const handleDeleteCard = (id) => {
+    const updatedCards = savedCards.filter(c => c.id !== id);
+    setSavedCards(updatedCards);
+    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updatedCards));
+  };
+
   const finalizeCheckout = async () => {
     if (cart.length === 0) return;
     
-    const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+    const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+    const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+    const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
+    const total = subtotal - couponDiscountAmt - pixDiscountAmt;
     
     const deal = {
       id: Date.now().toString(),
@@ -473,7 +497,10 @@ function App() {
     if (checkoutMethod === 'PIX') {
       setIsPixLoading(true);
       try {
-        const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+        const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+        const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+        const pixDiscountAmt = ((subtotal - couponDiscountAmt) * 0.05);
+        const total = subtotal - couponDiscountAmt - pixDiscountAmt;
         const response = await fetch('/mp-api/v1/payments', {
           method: 'POST',
           headers: {
@@ -1457,7 +1484,12 @@ function App() {
                           });
                           
                           if (validCoupon) {
-                            setAppliedCoupon(validCoupon);
+                            const cartSubtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+                            if (validCoupon.minPurchaseValue && cartSubtotal < validCoupon.minPurchaseValue) {
+                              alert(`Este cupom exige um valor mínimo de compra de R$ ${validCoupon.minPurchaseValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.`);
+                            } else {
+                              setAppliedCoupon(validCoupon);
+                            }
                           } else {
                             alert('Cupom inválido, esgotado ou expirado');
                           }
@@ -1514,8 +1546,9 @@ function App() {
                     <span style={{ color: 'var(--primary-color)' }}>
                       R$ {(() => {
                         const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
-                        const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
-                        return (subtotal - discount).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+                        const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
+                        return (subtotal - couponDiscountAmt - pixDiscountAmt).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                       })()}
                     </span>
                   </div>
@@ -1526,7 +1559,6 @@ function App() {
                   <select value={checkoutMethod} onChange={e => setCheckoutMethod(e.target.value)}>
                     <option value="PIX">PIX (5% Desconto Adicional)</option>
                     <option value="Cartão de Crédito">Cartão de Crédito (Até 12x)</option>
-                    <option value="Boleto">Boleto Bancário</option>
                   </select>
                 </div>
               </>
