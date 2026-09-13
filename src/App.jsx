@@ -51,6 +51,7 @@ function App() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [selectedSalesperson, setSelectedSalesperson] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [reviewData, setReviewData] = useState({ salesperson: '', stars: 5, comment: '' });
   const [viewingProfile, setViewingProfile] = useState(null); // Vendedor
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -269,7 +270,7 @@ function App() {
     setIsCartOpen(true);
   };
 
-  const finalizeCheckout = async () => {
+  const finalizeCheckout = async (customerEmail = null) => {
     if (cart.length === 0) return;
     
     const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
@@ -319,14 +320,64 @@ function App() {
         } catch (e) { console.error('Erro ao atualizar cupom', e); }
       }
 
-      alert(`Pedido finalizado com sucesso! Seu pedido já está no sistema da loja.`);
-      
+      if (customerEmail) {
+        try {
+          const receiptHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+              <div style="background-color: #f97316; padding: 20px; text-align: center; color: white;">
+                <h1 style="margin: 0; font-size: 24px;">Recibo de Pagamento</h1>
+                <p style="margin: 5px 0 0 0;">Pedido GESTE</p>
+              </div>
+              <div style="padding: 20px;">
+                <p>Olá <strong>${customerInfo.name || 'Cliente'}</strong>,</p>
+                <p>Seu pagamento foi aprovado com sucesso! Abaixo estão os detalhes do seu pedido:</p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                  <thead>
+                    <tr style="background-color: #f3f4f6; text-align: left;">
+                      <th style="padding: 10px; border-bottom: 2px solid #e5e7eb;">Produto</th>
+                      <th style="padding: 10px; border-bottom: 2px solid #e5e7eb; text-align: center;">Qtd</th>
+                      <th style="padding: 10px; border-bottom: 2px solid #e5e7eb; text-align: right;">Preço</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${cart.map(c => `
+                      <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${c.name}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${c.cartQuantity}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">R$ ${(c.price * c.cartQuantity).toFixed(2).replace('.',',')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+                <div style="margin-top: 20px; text-align: right; font-size: 18px;">
+                  <strong>Total: <span style="color: #f97316;">R$ ${total.toFixed(2).replace('.',',')}</span></strong>
+                </div>
+                <div style="margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center;">
+                  <p>ID do Pedido: ${deal.id}</p>
+                  <p>Data: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          await addDoc(collection(db, 'mail'), {
+            to: customerEmail,
+            message: {
+              subject: `Seu Recibo GESTE - Pedido #${deal.id.slice(-6)}`,
+              html: receiptHtml
+            }
+          });
+        } catch (emailErr) {
+          console.error("Erro ao agendar envio de email:", emailErr);
+        }
+      }
+
       setCart([]);
       setIsCartOpen(false);
       setAppliedCoupon(null);
       setCouponInput('');
       setReviewData({ salesperson: cart[0].salesperson, stars: 5, comment: '' });
-      setShowReviewModal(true);
+      setShowSuccessModal(true);
     } catch (e) {
       console.error(e);
       alert('Erro ao enviar pedido.');
@@ -484,11 +535,11 @@ function App() {
               const data = await response.json();
               if (data.status === 'approved') {
                 setShowMpCardForm(false);
-                await finalizeCheckout();
+                await finalizeCheckout(cardholderEmail);
               } else if (data.status === 'in_process') {
-                alert('Pagamento em análise! Seu pedido será confirmado em breve.');
                 setShowMpCardForm(false);
-                await finalizeCheckout();
+                alert('Pagamento em análise! Seu pedido será confirmado em breve.');
+                await finalizeCheckout(cardholderEmail);
               } else {
                 alert('Pagamento não aprovado: ' + (data.status_detail || data.message || 'Verifique os dados e tente novamente.'));
               }
