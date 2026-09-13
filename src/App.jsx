@@ -97,8 +97,6 @@ function App() {
   const [viewedProductsHistory, setViewedProductsHistory] = useState(() => JSON.parse(localStorage.getItem('vitrine_viewed_history')) || []);
   const [showViewedHistoryModal, setShowViewedHistoryModal] = useState(false);
   const [showOpinionsModal, setShowOpinionsModal] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
-  const [supportMessage, setSupportMessage] = useState('');
 
   const hasUnreadClient = deals.some(d => {
     if (d.messages && d.messages.length > 0) {
@@ -2608,65 +2606,6 @@ function App() {
         </div>
       )}
 
-      {/* Support Modal */}
-      {showSupportModal && (
-        <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, justifyContent: 'center', alignItems: 'center' }} onClick={(e) => e.target.className.includes('modal-overlay') && setShowSupportModal(false)}>
-          <div className="modal-content glass-panel" style={{ width: '90%', maxWidth: '500px', padding: '2rem', background: '#fff', borderRadius: '12px' }}>
-            <h2 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Central de Suporte</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              Tem alguma dúvida ou precisa de ajuda? Envie sua mensagem e entraremos em contato.
-            </p>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                await emailjs.send(
-                  'service_n2k30o9',
-                  'template_tht2nks',
-                  {
-                    to_email: 'geste.suporte@gmail.com',
-                    subject: 'Nova Mensagem de Suporte - GESTE',
-                    html_message: `
-                      <h3>Nova mensagem de suporte</h3>
-                      <p><strong>Cliente:</strong> ${customerInfo?.name || 'Não identificado'}</p>
-                      <p><strong>E-mail:</strong> ${customerInfo?.email || 'Não informado'}</p>
-                      <p><strong>Telefone:</strong> ${customerInfo?.phone || 'Não informado'}</p>
-                      <hr />
-                      <p><strong>Mensagem:</strong></p>
-                      <p>${supportMessage.replace(/\n/g, '<br/>')}</p>
-                    `
-                  },
-                  {
-                    publicKey: 'mNLHg4WMPI_KmzA8c'
-                  }
-                );
-                alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
-                setShowSupportModal(false);
-                setSupportMessage('');
-              } catch (err) {
-                console.error(err);
-                alert(`Erro ao enviar mensagem: ${err?.text || err?.message || JSON.stringify(err)}`);
-              }
-            }}>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Sua Mensagem</label>
-                <textarea 
-                  required 
-                  rows="5"
-                  placeholder="Descreva sua dúvida ou problema..."
-                  value={supportMessage}
-                  onChange={(e) => setSupportMessage(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn-secondary" onClick={() => setShowSupportModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Enviar Mensagem</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* ===== Modal: Suporte ===== */}
       {showSupportModal && (
         <div className="modal-overlay" style={{ zIndex: 1100 }}>
@@ -2690,7 +2629,7 @@ function App() {
                   'service_n2k30o9',
                   'template_tht2nks',
                   {
-                    to_email: 'giovani.azevedo06@gmail.com',
+                    to_email: 'geste.suporte@gmail.com',
                     subject: `Novo Chamado de Suporte de ${customerInfo?.name || 'Cliente'}`,
                     html_message: `<p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>`
                   },
@@ -2701,7 +2640,7 @@ function App() {
                 setSupportMessage('');
               } catch (err) {
                 console.error("Erro ao enviar suporte:", err);
-                alert("Erro ao enviar mensagem. Tente novamente mais tarde.");
+                alert(`Erro ao enviar mensagem: ${err?.text || err?.message || JSON.stringify(err)}. Tente novamente mais tarde.`);
               }
               setIsSupportSending(false);
             }}>
