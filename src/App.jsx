@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-import { Bell, Headset, User, ShoppingBag, Package } from 'lucide-react';
+import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard } from 'lucide-react';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -892,7 +892,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>📜</span> Histórico
+                  <History size={18} style={{ opacity: 0.7 }} /> Histórico
                 </button>
                 <button 
                   onClick={() => { setShowMeusPedidosModal(true); setIsUserMenuOpen(false); }}
@@ -916,7 +916,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>💳</span> Pagamentos
+                  <CreditCard size={18} style={{ opacity: 0.7 }} /> Pagamentos
                 </button>
                 <button 
                   onClick={() => { setShowSupportModal(true); setIsUserMenuOpen(false); }}
@@ -944,7 +944,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem' }}>🚪</span> Sair
+                  Sair
                 </button>
               </div>
             </div>
@@ -953,7 +953,7 @@ function App() {
       </header>
 
       {/* Sub-header Navigation */}
-      <div style={{ background: 'var(--primary-color)', padding: '0 5% 0.75rem', display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: '#fff', position: 'relative', zIndex: 90 }}>
+      <div style={{ background: 'var(--primary-color)', padding: '0.75rem 5%', display: 'flex', gap: '2rem', alignItems: 'center', fontSize: '1rem', color: '#fff', position: 'relative', zIndex: 90 }}>
         
         <div style={{ position: 'relative' }}>
           <div 
@@ -1305,7 +1305,7 @@ function App() {
                     onClick={(e) => { e.stopPropagation(); setPurchaseItem(item); setPurchaseQuantity(1); }}
                     disabled={item.quantity === 0}
                   >
-                    {item.quantity > 0 ? '🛒 Comprar' : 'Esgotado'}
+                    {item.quantity > 0 ? 'Comprar' : 'Esgotado'}
                   </button>
                 </div>
               </div>
@@ -1366,7 +1366,7 @@ function App() {
             </div>
             <div className="form-actions" style={{ justifyContent: 'center' }}>
               <button type="button" className="btn-secondary" onClick={() => setPurchaseItem(null)}>Cancelar</button>
-              <button type="button" className="btn-primary" onClick={confirmAddToCart} disabled={!selectedSalesperson}>🛒 Adicionar ao Carrinho</button>
+              <button type="button" className="btn-primary" onClick={confirmAddToCart} disabled={!selectedSalesperson}>Adicionar ao Carrinho</button>
             </div>
           </div>
         </div>
@@ -2196,16 +2196,15 @@ function App() {
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid #eee', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', color: '#333' }}>
-                        🏪 {deal.salesperson || 'Geste Store'}
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setShowMeusPedidosModal(false); setInternalChat({ dealId: deal.id, msg: '' }); }}
-                          style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.1rem 0.4rem', borderRadius: '2px', fontSize: '0.7rem', cursor: 'pointer' }}
-                        >
-                          💬 Chat
-                        </button>
+                        {deal.salesperson || 'Geste Store'}
                       </div>
-                      <div style={{ color: '#00bfa5', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                        🚚 Pedido entregue. FINALIZADO
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ color: '#666', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                          Protocolo: #{deal.id.slice(-6)}
+                        </div>
+                        <div style={{ background: '#00bfa5', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                          PEDIDO ENTREGUE
+                        </div>
                       </div>
                     </div>
                     
@@ -2243,7 +2242,7 @@ function App() {
                     {/* Actions */}
                     <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa' }}>
                       <div style={{ fontSize: '0.75rem', color: '#757575' }}>
-                        {deal.shippingStatus === 'Entregue' ? 'Avalie agora e receba 10 moedas' : 'Obrigado por comprar conosco!'}
+                        {deal.shippingStatus === 'Entregue' ? '' : 'Obrigado por comprar conosco!'}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button 
@@ -2260,7 +2259,7 @@ function App() {
                               });
                             }}
                           >
-                            Avaliar
+                            Avaliar Agora
                           </button>
                         <button 
                           style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -2646,7 +2645,7 @@ function App() {
         <div className="modal-overlay" style={{ zIndex: 1100 }}>
           <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>💬 Suporte</h2>
+              <h2 style={{ fontSize: '1.5rem', color: 'white', background: 'var(--primary-color)', padding: '0.5rem 1.5rem', borderRadius: '4px', margin: 0, display: 'inline-block' }}>Suporte</h2>
               <button onClick={() => setShowSupportModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>×</button>
             </div>
             
