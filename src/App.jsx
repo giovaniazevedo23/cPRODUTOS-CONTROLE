@@ -275,7 +275,8 @@ function App() {
       customerCpf: customerInfo.cpf,
       source: 'vitrine',
       messages: [],
-      shippingStatus: 'Recebido'
+      shippingStatus: 'Recebido',
+      paymentMethod: checkoutMethod
     };
 
     try {
@@ -826,7 +827,7 @@ function App() {
 
                     {/* Auto-completar quando tem busca */}
                     {searchTerm.trim() && products
-                      .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                      .filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
                       .slice(0, 5)
                       .map((p, i) => (
                         <div 
@@ -844,7 +845,7 @@ function App() {
                         >
                           <span style={{ opacity: 0.4, fontSize: '1.2rem' }}>🔍</span> 
                           <span>
-                            {p.name.toLowerCase().split(searchTerm.toLowerCase()).map((part, index, array) => (
+                            {(p.name || '').toLowerCase().split(searchTerm.toLowerCase()).map((part, index, array) => (
                               <span key={index}>
                                 {part}
                                 {index < array.length - 1 && <strong>{searchTerm.toLowerCase()}</strong>}
@@ -993,7 +994,7 @@ function App() {
           catalog.filter(item => {
             if (activeTab === 'ofertas' && !item.isOffer) return false;
             if (selectedCategory && item.category !== selectedCategory) return false;
-            if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase()) && !item.sku.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+            if (searchTerm && !(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(item.sku || '').toLowerCase().includes(searchTerm.toLowerCase())) return false;
             return true;
           }).map(item => {
             const status = getStatusConfig(item.quantity);
