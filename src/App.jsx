@@ -401,13 +401,25 @@ function App() {
       const dealRef = doc(db, 'deals', internalChat.dealId);
       const deal = deals.find(d => d.id === internalChat.dealId);
       const currentMessages = deal?.messages || [];
+      
+      const newMessages = [...currentMessages, {
+        sender: customerInfo.name,
+        role: 'client',
+        text: internalChat.msg,
+        date: new Date().toISOString()
+      }];
+
+      if (currentMessages.length === 0) {
+        newMessages.push({
+          sender: 'Sistema',
+          role: 'system',
+          text: `Abertura do protocolo #${deal.id.slice(-6)} registrada. Você está na fila de atendimento e em breve o(a) atendente ${deal.salesperson || 'atribuído(a)'} irá responder.`,
+          date: new Date(Date.now() + 1000).toISOString()
+        });
+      }
+
       await updateDoc(dealRef, {
-        messages: [...currentMessages, {
-          sender: customerInfo.name,
-          role: 'client',
-          text: internalChat.msg,
-          date: new Date().toISOString()
-        }]
+        messages: newMessages
       });
       setInternalChat(prev => ({ ...prev, msg: '' }));
     } catch (err) {
