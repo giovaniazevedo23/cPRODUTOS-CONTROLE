@@ -206,13 +206,50 @@ function App() {
         setProfileData({ birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '' });
         
         try {
+          const welcomeHtml = `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #007bff; margin: 0; font-size: 28px;">GESTE</h1>
+              </div>
+              <p style="font-size: 16px;">Olá, <strong>${loginForm.name}</strong>,</p>
+              <p style="font-size: 16px;">Seja muito bem-vindo(a)! É um prazer enorme ter você com a gente. 🥰</p>
+              <p style="font-size: 16px;">A GESTE é o seu mais novo destino para fazer compras de forma prática, rápida e segura. Nós reunimos diversas lojas incríveis em um só lugar para que você tenha a melhor experiência possível na hora de encontrar exatamente o que procura.</p>
+              <p style="font-size: 16px;">A partir de agora, ao acessar o nosso painel, você tem um mundo de possibilidades na palma da mão:</p>
+              <ul style="font-size: 16px; line-height: 1.6;">
+                <li>🏪 <strong>Escolha suas lojas favoritas:</strong> Navegue por diferentes estabelecimentos e escolha de qual loja você quer comprar hoje.</li>
+                <li>👀 <strong>Explore catálogos completos:</strong> Veja fotos, preços e todos os detalhes dos produtos que você deseja antes de colocar no carrinho.</li>
+                <li>🛒 <strong>Compre com facilidade:</strong> Tudo em um ambiente pensado para que a sua compra seja simples, do início ao fim.</li>
+              </ul>
+              <p style="font-size: 16px; margin-top: 20px;">Pronto para encontrar o que você procura?</p>
+              <p style="font-size: 16px;">Acesse sua conta agora mesmo, escolha a loja da sua preferência e aproveite as novidades!</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://geste.onrender.com" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Explorar Lojas e Produtos</a>
+              </div>
+              <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #555; text-align: center;">Lojas em destaque essa semana:</h3>
+                <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+                  <div style="text-align: center;"><span style="font-size: 24px;">🏢</span><br><small>Super Lojas</small></div>
+                  <div style="text-align: center;"><span style="font-size: 24px;">🛍️</span><br><small>Moda \u0026 Cia</small></div>
+                  <div style="text-align: center;"><span style="font-size: 24px;">🏬</span><br><small>Eletro Center</small></div>
+                </div>
+              </div>
+              <p style="font-size: 14px; color: #777;">Se tiver qualquer dúvida durante a navegação, nossa equipe está pronta para te ajudar. É só responder a este e-mail.</p>
+              <p style="font-size: 16px; margin-bottom: 5px;">Desejamos a você excelentes compras! 🎁</p>
+              <p style="font-size: 16px; font-weight: bold; margin-top: 0;">Um abraço,<br>Equipe GESTE 💙</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+              <div style="text-align: center; font-size: 12px; color: #999;">
+                <a href="https://geste.onrender.com" style="color: #007bff; text-decoration: none;">Acesse nosso site</a>
+              </div>
+            </div>
+          `;
+
           await emailjs.send(
             'service_n2k30o9',
             'template_tht2nks',
             {
               to_email: loginForm.email,
-              subject: 'Bem-vindo(a) à GESTE!',
-              html_message: `<p>Olá <strong>${loginForm.name}</strong>, estamos muito felizes com sua presença! Bem-vindo(a) à GESTE.</p>`
+              subject: '🎉 Que bom ter você aqui! Descubra as melhores lojas na GESTE 🛍️',
+              html_message: welcomeHtml
             },
             {
               publicKey: 'mNLHg4WMPI_KmzA8c'
