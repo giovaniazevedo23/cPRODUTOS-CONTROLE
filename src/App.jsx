@@ -62,7 +62,17 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeTab, setActiveTab] = useState('produtos'); // produtos, ofertas, cupons
   const [viewingDeal, setViewingDeal] = useState(null);
-  
+
+  // Módulo de Pagamento com Cartão
+  const [savedCards, setSavedCards] = useState(() => JSON.parse(localStorage.getItem('vitrine_saved_cards')) || []);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCardCheckout, setShowCardCheckout] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [installments, setInstallments] = useState(1);
+  const [isCardLoading, setIsCardLoading] = useState(false);
+  const [cardForm, setCardForm] = useState({ number: '', holder: '', expiry: '', cvv: '', type: 'credit' });
+  const [showAddCardForm, setShowAddCardForm] = useState(false);
+
   const [pixPayment, setPixPayment] = useState(null);
   const [isPixLoading, setIsPixLoading] = useState(false);
   const MP_ACCESS_TOKEN = "APP_USR-1632412567821548-091223-e95ce7374f7452b2a4a6935f02930030-1745666103";
@@ -394,6 +404,70 @@ function App() {
     return () => clearInterval(intervalId);
   }, [pixPayment]);
 
+  // ===== Card Management Functions =====
+  const formatCardNumber = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  const getCardBrand = (number) => {
+    const n = number.replace(/\s/g, '');
+    if (/^4/.test(n)) return { brand: 'Visa', icon: '💳' };
+    if (/^5[1-5]/.test(n)) return { brand: 'Mastercard', icon: '💳' };
+    if (/^3[47]/.test(n)) return { brand: 'Amex', icon: '💳' };
+    if (/^6/.test(n)) return { brand: 'Elo', icon: '💳' };
+    return { brand: 'Cartão', icon: '💳' };
+  };
+
+  const handleSaveCard = (e) => {
+    e.preventDefault();
+    const digits = cardForm.number.replace(/\s/g, '');
+    if (digits.length < 16) return alert('Número do cartão inválido.');
+    const { brand } = getCardBrand(digits);
+    const newCard = {
+      id: Date.now().toString(),
+      last4: digits.slice(-4),
+      brand,
+      holder: cardForm.holder,
+      expiry: cardForm.expiry,
+      type: cardForm.type,
+      bin: digits.slice(0, 6),
+    };
+    const updated = [...savedCards, newCard];
+    setSavedCards(updated);
+    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updated));
+    setCardForm({ number: '', holder: '', expiry: '', cvv: '', type: 'credit' });
+    setShowAddCardForm(false);
+    alert('Cartão salvo com sucesso!');
+  };
+
+  const handleDeleteCard = (id) => {
+    if (!window.confirm('Remover este cartão?')) return;
+    const updated = savedCards.filter(c => c.id !== id);
+    setSavedCards(updated);
+    localStorage.setItem('vitrine_saved_cards', JSON.stringify(updated));
+  };
+
+  const handleCardCheckout = async () => {
+    if (!selectedCard) return alert('Selecione um cartão para continuar.');
+    setIsCardLoading(true);
+    try {
+      const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
+      const installmentValue = (total / installments).toFixed(2);
+      
+      // Finaliza o pedido registrando no Firebase sem processar o cartão real por agora
+      // (a tokenização real exige SDK do MP que só funciona no frontend com campos PCI-compliant)
+      await finalizeCheckout();
+      setShowCardCheckout(false);
+      setSelectedCard(null);
+      setInstallments(1);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar pagamento.');
+    }
+    setIsCardLoading(false);
+  };
+
   const handleSendInternalMessage = async (e) => {
     e.preventDefault();
     if (!internalChat || !internalChat.msg.trim()) return;
@@ -708,6 +782,18 @@ function App() {
                 >
                   <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>📦</span> Meus Pedidos
                 </button>
+                <button 
+                  onClick={() => { setShowPaymentModal(true); setIsUserMenuOpen(false); }}
+                  style={{
+                    width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+                    padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#333', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '0.75rem'
+                  }}
+                  onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
+                  onMouseOut={(e) => e.target.style.background = 'transparent'}
+                >
+                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>💳</span> Pagamentos
+                </button>
                 <div style={{ height: '1px', background: '#eee', margin: '0.25rem 0' }} />
                 <button 
                   onClick={() => {
@@ -731,7 +817,7 @@ function App() {
       </header>
 
       {/* Sub-header Navigation */}
-      <div style={{ background: 'var(--primary-color)', padding: '0 5% 0.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: '#fff', position: 'relative', zIndex: 90 }}>
+      <div style={{ background: 'var(--primary-color)', padding: '0 5% 0.75rem', display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: '#fff', position: 'relative', zIndex: 90 }}>
         
         <div style={{ position: 'relative' }}>
           <div 
@@ -1288,7 +1374,24 @@ function App() {
 
             <div className="form-actions" style={{ justifyContent: 'space-between' }}>
               <button className="btn-secondary" onClick={() => setCart([])}>Esvaziar Carrinho</button>
-              <button className="btn-primary" onClick={handleCheckout} disabled={cart.length === 0 || isPixLoading} style={{ gap: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button className="btn-primary" 
+                onClick={() => {
+                  if (checkoutMethod === 'Cartão de Crédito') {
+                    if (savedCards.length === 0) {
+                      if (window.confirm('Você não tem cartões salvos. Deseja ir para Pagamentos para adicionar um?')) {
+                        setIsCartOpen(false);
+                        setShowPaymentModal(true);
+                      }
+                    } else {
+                      setShowCardCheckout(true);
+                    }
+                  } else {
+                    handleCheckout();
+                  }
+                }}
+                disabled={cart.length === 0 || isPixLoading || isCardLoading} 
+                style={{ gap: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
                 {isPixLoading ? (
                   <>
                     <div style={{ width: '14px', height: '14px', borderTopColor: 'white', borderTopStyle: 'solid', borderWidth: '2px', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
@@ -1297,6 +1400,176 @@ function App() {
                 ) : (
                   <>🛒 Finalizar Pedido</>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal: Gerenciar Pagamentos ===== */}
+      {showPaymentModal && (
+        <div className="modal-overlay" style={{ zIndex: 1050 }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h2>💳 Meus Pagamentos</h2>
+              <button className="close-btn" onClick={() => { setShowPaymentModal(false); setShowAddCardForm(false); }}>×</button>
+            </div>
+
+            {/* Lista de cartões salvos */}
+            {!showAddCardForm && (
+              <div style={{ marginTop: '1rem' }}>
+                {savedCards.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💳</div>
+                    <p>Nenhum cartão cadastrado.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                    {savedCards.map(card => (
+                      <div key={card.id} style={{
+                        background: card.type === 'credit'
+                          ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+                          : 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)',
+                        borderRadius: '12px', padding: '1.25rem 1.5rem', color: 'white',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginBottom: '0.25rem' }}>
+                            {card.type === 'credit' ? '💳 CRÉDITO' : '💳 DÉBITO'} · {card.brand}
+                          </div>
+                          <div style={{ fontSize: '1.1rem', letterSpacing: '2px', fontWeight: 'bold' }}>
+                            •••• •••• •••• {card.last4}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.8 }}>
+                            {card.holder.toUpperCase()} · {card.expiry}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCard(card.id)}
+                          style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '8px',
+                            color: 'white', cursor: 'pointer', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button className="btn-primary" style={{ width: '100%' }} onClick={() => setShowAddCardForm(true)}>
+                  + Adicionar Novo Cartão
+                </button>
+              </div>
+            )}
+
+            {/* Formulário de novo cartão */}
+            {showAddCardForm && (
+              <form onSubmit={handleSaveCard} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Tipo de Cartão</label>
+                  <select className="input-primary" value={cardForm.type} onChange={e => setCardForm(p => ({ ...p, type: e.target.value }))}>
+                    <option value="credit">💳 Crédito</option>
+                    <option value="debit">💳 Débito</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Número do Cartão</label>
+                  <input className="input-primary" placeholder="0000 0000 0000 0000" value={cardForm.number}
+                    onChange={e => setCardForm(p => ({ ...p, number: formatCardNumber(e.target.value) }))} required maxLength={19} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Nome do Titular</label>
+                  <input className="input-primary" placeholder="Como impresso no cartão" value={cardForm.holder}
+                    onChange={e => setCardForm(p => ({ ...p, holder: e.target.value.toUpperCase() }))} required />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Validade</label>
+                    <input className="input-primary" placeholder="MM/AA" value={cardForm.expiry}
+                      onChange={e => {
+                        let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+                        setCardForm(p => ({ ...p, expiry: v }));
+                      }} required maxLength={5} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>CVV</label>
+                    <input className="input-primary" type="password" placeholder="•••" value={cardForm.cvv}
+                      onChange={e => setCardForm(p => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))} required maxLength={4} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                  <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setShowAddCardForm(false)}>Cancelar</button>
+                  <button type="submit" className="btn-primary" style={{ flex: 1 }}>Salvar Cartão</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal: Checkout com Cartão ===== */}
+      {showCardCheckout && (
+        <div className="modal-overlay" style={{ zIndex: 1050 }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <h2>💳 Pagar com Cartão</h2>
+              <button className="close-btn" onClick={() => setShowCardCheckout(false)}>×</button>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Selecione o cartão para pagamento:</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                {savedCards.map(card => (
+                  <div key={card.id}
+                    onClick={() => setSelectedCard(card)}
+                    style={{
+                      border: `2px solid ${selectedCard?.id === card.id ? 'var(--primary-color)' : '#e5e7eb'}`,
+                      borderRadius: '12px', padding: '1rem 1.25rem', cursor: 'pointer',
+                      background: selectedCard?.id === card.id ? '#fff7ed' : 'white',
+                      display: 'flex', alignItems: 'center', gap: '1rem',
+                      transition: 'all 0.2s'
+                    }}>
+                    <div style={{
+                      width: '48px', height: '32px', borderRadius: '6px',
+                      background: card.type === 'credit' ? 'linear-gradient(135deg, #1a1a2e, #0f3460)' : 'linear-gradient(135deg, #134e5e, #71b280)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.75rem', fontWeight: 'bold'
+                    }}>{card.brand.slice(0, 4)}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>•••• {card.last4}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#999' }}>{card.holder} · {card.type === 'credit' ? 'Crédito' : 'Débito'}</div>
+                    </div>
+                    {selectedCard?.id === card.id && <span style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>✓</span>}
+                  </div>
+                ))}
+              </div>
+
+              {selectedCard?.type === 'credit' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Número de Parcelas</label>
+                  <select className="input-primary" value={installments} onChange={e => setInstallments(Number(e.target.value))}>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => {
+                      const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
+                      const val = (total / n).toFixed(2);
+                      return <option key={n} value={n}>{n}x de R$ {val}{n === 1 ? ' sem juros' : ''}</option>;
+                    })}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span>Total</span>
+                  <strong>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toFixed(2)}</strong>
+                </div>
+                {selectedCard?.type === 'credit' && installments > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#999', marginTop: '4px' }}>
+                    <span>{installments}x de</span>
+                    <span>R$ {(cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0) / installments).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              <button className="btn-primary" style={{ width: '100%', padding: '0.9rem' }} onClick={handleCardCheckout} disabled={!selectedCard || isCardLoading}>
+                {isCardLoading ? 'Processando...' : '✅ Confirmar Pagamento'}
               </button>
             </div>
           </div>
