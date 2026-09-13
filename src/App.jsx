@@ -61,8 +61,12 @@ function App() {
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeTab, setActiveTab] = useState('produtos'); // produtos, ofertas, cupons
-  
   const [viewingDeal, setViewingDeal] = useState(null);
+  
+  const [pixPayment, setPixPayment] = useState(null);
+  const [isPixLoading, setIsPixLoading] = useState(false);
+  const MP_ACCESS_TOKEN = "APP_USR-1632412567821548-091223-e95ce7374f7452b2a4a6935f02930030-1745666103";
+
   const [viewingProduct, setViewingProduct] = useState(null);
   const [productReviews, setProductReviews] = useState([]);
   const [coupons, setCoupons] = useState([]);
@@ -252,7 +256,7 @@ function App() {
     setIsCartOpen(true);
   };
 
-  const handleCheckout = async () => {
+  const finalizeCheckout = async () => {
     if (cart.length === 0) return;
     
     const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
@@ -314,6 +318,80 @@ function App() {
       alert('Erro ao enviar pedido.');
     }
   };
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    
+    if (checkoutMethod === 'PIX') {
+      setIsPixLoading(true);
+      try {
+        const total = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+        const response = await fetch('/mp-api/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+            'X-Idempotency-Key': Date.now().toString()
+          },
+          body: JSON.stringify({
+            transaction_amount: total,
+            description: "Pedido GESTE",
+            payment_method_id: "pix",
+            payer: {
+              email: "cliente@suamarca.com"
+            }
+          })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'pending' && data.point_of_interaction) {
+          const transData = data.point_of_interaction.transaction_data;
+          setPixPayment({
+            id: data.id,
+            qrCode: transData.qr_code,
+            qrCodeBase64: transData.qr_code_base64,
+            total: total
+          });
+        } else {
+          alert('Erro ao gerar PIX: ' + (data.message || JSON.stringify(data)));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao conectar com Mercado Pago.');
+      }
+      setIsPixLoading(false);
+    } else {
+      finalizeCheckout();
+    }
+  };
+
+  useEffect(() => {
+    let intervalId;
+    if (pixPayment && pixPayment.id) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await fetch(`/mp-api/v1/payments/${pixPayment.id}`, {
+            headers: {
+              'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
+            }
+          });
+          const data = await res.json();
+          if (data.status === 'approved') {
+            clearInterval(intervalId);
+            setPixPayment(null);
+            finalizeCheckout();
+          } else if (data.status === 'cancelled' || data.status === 'rejected') {
+            clearInterval(intervalId);
+            setPixPayment(null);
+            alert('Pagamento PIX cancelado ou rejeitado.');
+          }
+        } catch (e) {
+          console.error('Polling error', e);
+        }
+      }, 5000);
+    }
+    return () => clearInterval(intervalId);
+  }, [pixPayment]);
 
   const handleSendInternalMessage = async (e) => {
     e.preventDefault();
@@ -1197,8 +1275,15 @@ function App() {
 
             <div className="form-actions" style={{ justifyContent: 'space-between' }}>
               <button className="btn-secondary" onClick={() => setCart([])}>Esvaziar Carrinho</button>
-              <button className="btn-primary" onClick={handleCheckout} disabled={cart.length === 0} style={{ gap: '0.5rem' }}>
-                🛒 Finalizar Pedido
+              <button className="btn-primary" onClick={handleCheckout} disabled={cart.length === 0 || isPixLoading} style={{ gap: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {isPixLoading ? (
+                  <>
+                    <div style={{ width: '14px', height: '14px', borderTopColor: 'white', borderTopStyle: 'solid', borderWidth: '2px', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    Gerando PIX...
+                  </>
+                ) : (
+                  <>🛒 Finalizar Pedido</>
+                )}
               </button>
             </div>
           </div>
@@ -1990,6 +2075,50 @@ function App() {
                 Enviar
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pix Payment Modal */}
+      {pixPayment && (
+        <div className="modal-overlay" style={{ zIndex: 1200 }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--text-primary)', marginBottom: '1rem' }}>Pague via PIX</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Escaneie o QR Code abaixo com o aplicativo do seu banco para finalizar o pedido no valor de <strong>R$ {pixPayment.total.toFixed(2)}</strong>.
+            </p>
+            <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', display: 'inline-block', marginBottom: '1rem' }}>
+              <img src={`data:image/jpeg;base64,${pixPayment.qrCodeBase64}`} alt="QR Code PIX" style={{ width: '200px', height: '200px' }} />
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Ou utilize a chave Copia e Cola:</p>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input type="text" readOnly value={pixPayment.qrCode} style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #ccc', background: '#f5f5f5', color: '#333' }} />
+                <button 
+                  className="btn-primary" 
+                  style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(pixPayment.qrCode);
+                    alert('Chave PIX copiada!');
+                  }}
+                >
+                  Copiar
+                </button>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ width: '20px', height: '20px', borderTopColor: 'var(--primary-color)', borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent', borderStyle: 'solid', borderWidth: '3px', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aguardando pagamento...</span>
+            </div>
+            <style>{`
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            `}</style>
+            
+            <div style={{ marginTop: '2rem' }}>
+              <button className="btn-secondary" onClick={() => setPixPayment(null)}>Cancelar Operação</button>
+            </div>
           </div>
         </div>
       )}
