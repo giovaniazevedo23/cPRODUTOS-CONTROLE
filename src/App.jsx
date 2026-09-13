@@ -53,6 +53,9 @@ function App() {
   const [selectedSalesperson, setSelectedSalesperson] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSupportSending, setIsSupportSending] = useState(false);
   const [reviewData, setReviewData] = useState({ salesperson: '', stars: 5, comment: '' });
   const [viewingProfile, setViewingProfile] = useState(null); // Vendedor
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -879,6 +882,18 @@ function App() {
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
                   <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>💳</span> Pagamentos
+                </button>
+                <button 
+                  onClick={() => { setShowSupportModal(true); setIsUserMenuOpen(false); }}
+                  style={{
+                    width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+                    padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#333', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '0.75rem'
+                  }}
+                  onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
+                  onMouseOut={(e) => e.target.style.background = 'transparent'}
+                >
+                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>💬</span> Suporte
                 </button>
                 <div style={{ height: '1px', background: '#eee', margin: '0.25rem 0' }} />
                 <button 
@@ -2646,6 +2661,68 @@ function App() {
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn-secondary" onClick={() => setShowSupportModal(false)}>Cancelar</button>
                 <button type="submit" className="btn-primary">Enviar Mensagem</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal: Suporte ===== */}
+      {showSupportModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>💬 Suporte</h2>
+              <button onClick={() => setShowSupportModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>×</button>
+            </div>
+            
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+              Tem alguma dúvida ou problema? Envie uma mensagem diretamente para nossa equipe que responderemos em breve!
+            </p>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!supportMessage.trim()) return;
+              
+              setIsSupportSending(true);
+              try {
+                await emailjs.send(
+                  'service_n2k30o9',
+                  'template_tht2nks',
+                  {
+                    to_email: 'giovani.azevedo06@gmail.com',
+                    subject: `Novo Chamado de Suporte de ${customerInfo?.name || 'Cliente'}`,
+                    html_message: `<p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>`
+                  },
+                  { publicKey: 'mNLHg4WMPI_KmzA8c' }
+                );
+                alert("Mensagem enviada com sucesso! Entraremos em contato em breve.");
+                setShowSupportModal(false);
+                setSupportMessage('');
+              } catch (err) {
+                console.error("Erro ao enviar suporte:", err);
+                alert("Erro ao enviar mensagem. Tente novamente mais tarde.");
+              }
+              setIsSupportSending(false);
+            }}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label>Sua Mensagem</label>
+                <textarea 
+                  required
+                  placeholder="Descreva aqui a sua dúvida, sugestão ou problema..."
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowSupportModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={isSupportSending}>
+                  {isSupportSending ? 'Enviando...' : 'Enviar Mensagem'}
+                </button>
               </div>
             </form>
           </div>
