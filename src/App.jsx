@@ -5,7 +5,11 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-
+import profileIcon from './assets/profile_icon.png';
+import shoppingBagIcon from './assets/shopping_bag_icon.png';
+import boxIcon from './assets/box_icon.png';
+import supportIcon from './assets/support_icon.png';
+import notificationIcon from './assets/notification_icon.png';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -800,7 +804,7 @@ function App() {
             onClick={() => setShowMyProfile(true)}
             title="Notificações"
           >
-            <span style={{ fontSize: '1.5rem' }}>🔔</span>
+            <img src={notificationIcon} alt="Notificações" style={{ width: '24px', height: '24px' }} />
             {hasNfeNotification && (
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }}></span>
             )}
@@ -867,7 +871,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>👤</span> Perfil
+                  <img src={profileIcon} alt="Perfil" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Perfil
                 </button>
                 <button 
                   onClick={() => { setShowMyProfile(true); setIsUserMenuOpen(false); }}
@@ -879,7 +883,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>🛍️</span> Compras
+                  <img src={shoppingBagIcon} alt="Compras" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Compras
                   {hasUnreadClient && <span style={{ width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', marginLeft: 'auto' }}></span>}
                 </button>
                 <button 
@@ -904,7 +908,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>📦</span> Meus Pedidos
+                  <img src={boxIcon} alt="Meus Pedidos" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Meus Pedidos
                 </button>
                 <button 
                   onClick={() => { setShowPaymentModal(true); setIsUserMenuOpen(false); }}
@@ -928,7 +932,7 @@ function App() {
                   onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
-                  <span style={{ fontSize: '1.1rem', opacity: 0.7 }}>💬</span> Suporte
+                  <img src={supportIcon} alt="Suporte" style={{ width: '18px', height: '18px', opacity: 0.7 }} /> Suporte
                 </button>
                 <div style={{ height: '1px', background: '#eee', margin: '0.25rem 0' }} />
                 <button 
@@ -1081,9 +1085,7 @@ function App() {
               </div>
             )}
             
-            <button className="btn-secondary" onClick={() => setShowSupportModal(true)} style={{ background: '#333', color: '#fff', border: 'none' }}>
-              🎧 Suporte
-            </button>
+
             <button className="btn-secondary" onClick={() => setIsCartOpen(true)} style={{ position: 'relative' }}>
               🛒 Ver Carrinho
               {cart.length > 0 && (
