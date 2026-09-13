@@ -14,8 +14,8 @@ app.use(cors());
 app.use(express.json());
 
 // Proxy route for Mercado Pago
-app.all('/mp-api/*', async (req, res) => {
-  const targetUrl = 'https://api.mercadopago.com' + req.url.replace('/mp-api', '');
+app.use('/mp-api', async (req, res) => {
+  const targetUrl = 'https://api.mercadopago.com' + req.url;
   
   try {
     const fetchOptions = {
