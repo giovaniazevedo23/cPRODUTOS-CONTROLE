@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard } from 'lucide-react';
+import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart } from 'lucide-react';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -1101,7 +1101,7 @@ function App() {
             
 
             <button className="btn-secondary" onClick={() => setIsCartOpen(true)} style={{ position: 'relative' }}>
-              🛒 Ver Carrinho
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingCart size={18} /> Ver Carrinho</div>
               {cart.length > 0 && (
                 <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--primary-color)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 'bold' }}>
                   {cart.reduce((a,c) => a + c.cartQuantity, 0)}
@@ -1395,7 +1395,7 @@ function App() {
         <div className="modal-overlay">
           <div className="modal-content glass-panel" style={{ maxWidth: '600px' }}>
             <div className="modal-header">
-              <h2>🛒 Seu Carrinho</h2>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingCart size={24} /> Seu Carrinho</h2>
               <button className="close-btn" onClick={() => setIsCartOpen(false)}>×</button>
             </div>
             
@@ -1554,7 +1554,7 @@ function App() {
                     Gerando PIX...
                   </>
                 ) : (
-                  <>🛒 Finalizar Pedido</>
+                  <><ShoppingCart size={18} style={{ marginRight: '0.5rem' }} /> Finalizar Pedido</>
                 )}
               </button>
             </div>
@@ -2504,7 +2504,7 @@ function App() {
                       alert('Adicionado ao carrinho com sucesso!');
                     }}
                   >
-                    🛒 Adicionar Rápido
+                    Adicionar Rápido
                   </button>
                   <button 
                     className="btn-primary" 
