@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -67,6 +67,9 @@ function App() {
   const [savedCards, setSavedCards] = useState(() => JSON.parse(localStorage.getItem('vitrine_saved_cards')) || []);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCardCheckout, setShowCardCheckout] = useState(false);
+  const [showMpCardForm, setShowMpCardForm] = useState(false);
+  const [isMpFormMounted, setIsMpFormMounted] = useState(false);
+  const mpCardFormRef = useRef(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [installments, setInstallments] = useState(1);
   const [isCardLoading, setIsCardLoading] = useState(false);
@@ -403,6 +406,110 @@ function App() {
     }
     return () => clearInterval(intervalId);
   }, [pixPayment]);
+
+  // ===== Mercado Pago Card SDK =====
+  const MP_PUBLIC_KEY = 'APP_USR-d3ac1069-b68c-4bc9-ac8a-45c9993f0e84';
+
+  useEffect(() => {
+    if (!showMpCardForm) {
+      // Unmount previous form if exists
+      if (mpCardFormRef.current) {
+        try { mpCardFormRef.current.unmount(); } catch(e) {}
+        mpCardFormRef.current = null;
+      }
+      setIsMpFormMounted(false);
+      return;
+    }
+
+    const initMPForm = () => {
+      if (!window.MercadoPago) {
+        setTimeout(initMPForm, 150);
+        return;
+      }
+
+      const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
+      const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
+
+      const form = mp.cardForm({
+        amount: total.toFixed(2),
+        iframe: true,
+        form: {
+          id: 'mp-card-form',
+          cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
+          expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
+          securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
+          cardholderName: { id: 'mp-cardholder-name', placeholder: 'Nome como no cartão' },
+          issuer: { id: 'mp-issuer', label: 'Bandeira' },
+          installments: { id: 'mp-installments', label: 'Parcelas' },
+          identificationType: { id: 'mp-identification-type', label: 'Tipo' },
+          identificationNumber: { id: 'mp-identification-number', placeholder: 'CPF/CNPJ' },
+          cardholderEmail: { id: 'mp-cardholder-email', placeholder: 'Email para recibo' },
+        },
+        callbacks: {
+          onFormMounted: (error) => {
+            if (error) { console.warn('MP form mount error:', error); return; }
+            setIsMpFormMounted(true);
+          },
+          onSubmit: async (event) => {
+            event.preventDefault();
+            setIsCardLoading(true);
+            try {
+              const { paymentMethodId, issuerId, cardholderEmail, amount, token, installments: inst, identificationNumber, identificationType } = form.getCardFormData();
+              const response = await fetch('/mp-api/v1/payments', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                  'X-Idempotency-Key': Date.now().toString()
+                },
+                body: JSON.stringify({
+                  transaction_amount: Number(amount),
+                  token,
+                  description: 'Pedido GESTE',
+                  installments: Number(inst) || 1,
+                  payment_method_id: paymentMethodId,
+                  issuer_id: issuerId ? Number(issuerId) : undefined,
+                  payer: {
+                    email: cardholderEmail,
+                    identification: { type: identificationType, number: identificationNumber }
+                  }
+                })
+              });
+              const data = await response.json();
+              if (data.status === 'approved') {
+                setShowMpCardForm(false);
+                await finalizeCheckout();
+              } else if (data.status === 'in_process') {
+                alert('Pagamento em análise! Seu pedido será confirmado em breve.');
+                setShowMpCardForm(false);
+                await finalizeCheckout();
+              } else {
+                alert('Pagamento não aprovado: ' + (data.status_detail || data.message || 'Verifique os dados e tente novamente.'));
+              }
+            } catch (err) {
+              console.error(err);
+              alert('Erro ao processar pagamento. Tente novamente.');
+            }
+            setIsCardLoading(false);
+          },
+          onError: (errors) => {
+            console.error('MP Card Errors:', errors);
+          }
+        }
+      });
+
+      mpCardFormRef.current = form;
+    };
+
+    initMPForm();
+
+    return () => {
+      if (mpCardFormRef.current) {
+        try { mpCardFormRef.current.unmount(); } catch(e) {}
+        mpCardFormRef.current = null;
+      }
+    };
+  }, [showMpCardForm]);
 
   // ===== Card Management Functions =====
   const formatCardNumber = (val) => {
@@ -1377,14 +1484,7 @@ function App() {
               <button className="btn-primary" 
                 onClick={() => {
                   if (checkoutMethod === 'Cartão de Crédito') {
-                    if (savedCards.length === 0) {
-                      if (window.confirm('Você não tem cartões salvos. Deseja ir para Pagamentos para adicionar um?')) {
-                        setIsCartOpen(false);
-                        setShowPaymentModal(true);
-                      }
-                    } else {
-                      setShowCardCheckout(true);
-                    }
+                    setShowMpCardForm(true);
                   } else {
                     handleCheckout();
                   }
@@ -1402,6 +1502,92 @@ function App() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal: Pagamento Real com Cartão (Mercado Pago SDK) ===== */}
+      {showMpCardForm && (
+        <div className="modal-overlay" style={{ zIndex: 1060 }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h2>💳 Pagamento com Cartão</h2>
+              <button className="close-btn" onClick={() => setShowMpCardForm(false)} disabled={isCardLoading}>×</button>
+            </div>
+
+            <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#999', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              🔒 Dados protegidos pelo Mercado Pago — não compartilhados conosco.
+            </div>
+
+            <form id="mp-card-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Número do Cartão</label>
+                <div id="mp-card-number" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Nome do Titular</label>
+                <div id="mp-cardholder-name" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Validade</label>
+                  <div id="mp-expiration-date" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CVV</label>
+                  <div id="mp-security-code" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tipo de Documento</label>
+                  <div id="mp-identification-type" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CPF/CNPJ</label>
+                  <div id="mp-identification-number" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>E-mail para recibo</label>
+                <div id="mp-cardholder-email" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+              </div>
+
+              <div style={{ display: 'none' }}>
+                <div id="mp-issuer"></div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Parcelas</label>
+                <div id="mp-installments" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '0.6rem 0.75rem', minHeight: '42px', background: 'white' }}></div>
+              </div>
+
+              <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600' }}>
+                  <span>Total da compra</span>
+                  <span style={{ color: 'var(--primary-color)' }}>R$ {cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {!isMpFormMounted && (
+                <div style={{ textAlign: 'center', color: '#999', fontSize: '0.85rem', padding: '0.5rem' }}>
+                  ⏳ Carregando formulário seguro...
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{ width: '100%', padding: '0.9rem', opacity: (!isMpFormMounted || isCardLoading) ? 0.6 : 1 }}
+                disabled={!isMpFormMounted || isCardLoading}
+              >
+                {isCardLoading ? '⏳ Processando pagamento...' : '🔒 Pagar Agora'}
+              </button>
+            </form>
           </div>
         </div>
       )}
