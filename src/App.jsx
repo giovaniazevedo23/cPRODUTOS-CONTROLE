@@ -51,7 +51,6 @@ function App() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [selectedSalesperson, setSelectedSalesperson] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [reviewData, setReviewData] = useState({ salesperson: '', stars: 5, comment: '' });
   const [viewingProfile, setViewingProfile] = useState(null); // Vendedor
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -320,12 +319,14 @@ function App() {
         } catch (e) { console.error('Erro ao atualizar cupom', e); }
       }
 
+      alert(`Pedido finalizado com sucesso! Seu pedido já está no sistema da loja.`);
+      
       setCart([]);
       setIsCartOpen(false);
       setAppliedCoupon(null);
       setCouponInput('');
       setReviewData({ salesperson: cart[0].salesperson, stars: 5, comment: '' });
-      setShowSuccessModal(true);
+      setShowReviewModal(true);
     } catch (e) {
       console.error(e);
       alert('Erro ao enviar pedido.');
@@ -447,7 +448,8 @@ function App() {
           issuer: { id: 'mp-issuer', label: 'Bandeira' },
           installments: { id: 'mp-installments', label: 'Parcelas' },
           identificationType: { id: 'mp-identification-type', label: 'Tipo' },
-          identificationNumber: { id: 'mp-identification-number', placeholder: 'CPF/CNPJ' }
+          identificationNumber: { id: 'mp-identification-number', placeholder: 'CPF/CNPJ' },
+          cardholderEmail: { id: 'mp-cardholder-email', placeholder: 'Email para recibo' },
         },
         callbacks: {
           onFormMounted: (error) => {
@@ -458,7 +460,7 @@ function App() {
             event.preventDefault();
             setIsCardLoading(true);
             try {
-              const { paymentMethodId, issuerId, amount, token, installments: inst, identificationNumber, identificationType } = form.getCardFormData();
+              const { paymentMethodId, issuerId, cardholderEmail, amount, token, installments: inst, identificationNumber, identificationType } = form.getCardFormData();
               const response = await fetch('/mp-api/v1/payments', {
                 method: 'POST',
                 headers: {
@@ -474,7 +476,7 @@ function App() {
                   payment_method_id: paymentMethodId,
                   issuer_id: issuerId ? Number(issuerId) : undefined,
                   payer: {
-                    email: 'cliente@site.com.br',
+                    email: cardholderEmail,
                     identification: { type: identificationType, number: identificationNumber }
                   }
                 })
@@ -1518,27 +1520,6 @@ function App() {
         </div>
       )}
 
-      {/* ===== Modal: Sucesso ===== */}
-      {showSuccessModal && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem', margin: '0 auto 1.5rem auto', boxShadow: '0 10px 25px rgba(16,185,129,0.3)' }}>
-              ✓
-            </div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Pagamento Aprovado!</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-              Seu pedido foi processado com sucesso e já está no sistema da loja.
-            </p>
-            <button className="btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1rem' }} onClick={() => {
-              setShowSuccessModal(false);
-              setShowReviewModal(true);
-            }}>
-              Continuar
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ===== Modal: Pagamento Real com Cartão (Mercado Pago SDK) ===== */}
       {showMpCardForm && (
         <div className="modal-overlay" style={{ zIndex: 1060 }}>
@@ -1590,6 +1571,11 @@ function App() {
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CPF/CNPJ</label>
                   <input type="text" id="mp-identification-number" className="input-primary" style={{ width: '100%', height: '46px' }} />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>E-mail para recibo</label>
+                <input type="email" id="mp-cardholder-email" className="input-primary" style={{ width: '100%', height: '46px' }} />
               </div>
 
               <div style={{ display: 'none' }}>
