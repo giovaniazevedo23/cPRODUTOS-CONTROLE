@@ -1548,7 +1548,7 @@ function App() {
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Nome do Titular</label>
-                <div id="mp-cardholder-name" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
+                <input type="text" id="mp-cardholder-name" className="input-primary" style={{ width: '100%', height: '46px' }} />
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
@@ -1565,26 +1565,26 @@ function App() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tipo de Documento</label>
-                  <div id="mp-identification-type" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
+                  <select id="mp-identification-type" className="input-primary" style={{ width: '100%', height: '46px' }}></select>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>CPF/CNPJ</label>
-                  <div id="mp-identification-number" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
+                  <input type="text" id="mp-identification-number" className="input-primary" style={{ width: '100%', height: '46px' }} />
                 </div>
               </div>
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>E-mail para recibo</label>
-                <div id="mp-cardholder-email" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
+                <input type="email" id="mp-cardholder-email" className="input-primary" style={{ width: '100%', height: '46px' }} />
               </div>
 
               <div style={{ display: 'none' }}>
-                <div id="mp-issuer"></div>
+                <select id="mp-issuer"></select>
               </div>
 
               <div style={{ display: 'none' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Parcelas</label>
-                <div id="mp-installments" style={{ border: '1px solid #ddd', borderRadius: '8px', height: '46px', overflow: 'hidden', background: 'white' }}></div>
+                <select id="mp-installments"></select>
               </div>
 
               <div style={{ background: '#f9f9f9', borderRadius: '8px', padding: '0.75rem 1rem' }}>
@@ -1596,7 +1596,7 @@ function App() {
 
               {!isMpFormMounted && (
                 <div style={{ textAlign: 'center', color: '#999', fontSize: '0.85rem', padding: '0.5rem' }}>
-                  ⏳ Carregando formulário seguro...
+                  Carregando ambiente seguro...
                 </div>
               )}
 
@@ -1606,7 +1606,7 @@ function App() {
                 style={{ width: '100%', padding: '0.9rem', opacity: (!isMpFormMounted || isCardLoading) ? 0.6 : 1 }}
                 disabled={!isMpFormMounted || isCardLoading}
               >
-                {isCardLoading ? '⏳ Processando pagamento...' : '🔒 Pagar Agora'}
+                {isCardLoading ? 'Processando pagamento...' : '🔒 Pagar Agora'}
               </button>
             </form>
           </div>
