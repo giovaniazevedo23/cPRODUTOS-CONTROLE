@@ -50,6 +50,39 @@ app.use('/mp-api', async (req, res) => {
   }
 });
 
+// Proxy route for NFE.io
+app.use('/nfe-api', async (req, res) => {
+  const targetUrl = 'https://api.nfe.io' + req.url;
+  
+  try {
+    const fetchOptions = {
+      method: req.method,
+      headers: {
+        'Content-Type': req.headers['content-type'] || 'application/json',
+        'Authorization': req.headers['authorization'] || '',
+      }
+    };
+    
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body && Object.keys(req.body).length > 0) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    const response = await fetch(targetUrl, fetchOptions);
+    let data;
+    const text = await response.text();
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch(e) {
+      data = text;
+    }
+    
+    res.status(response.status).json(data);
+  } catch (error) {
+    console.error('NFE Proxy Error:', error);
+    res.status(500).json({ message: 'Internal Server Proxy Error', error: error.message });
+  }
+});
+
 // Serve static files from the React build
 app.use(express.static(path.join(__dirname, 'dist')));
 
