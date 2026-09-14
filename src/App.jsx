@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, upd
 import logo from './assets/logo.jpg';
 import { db } from './firebase';
 import emailjs from '@emailjs/browser';
-import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart, Search } from 'lucide-react';
+import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart, Search, Heart, Sparkles } from 'lucide-react';
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
@@ -37,6 +37,14 @@ function App() {
   const [customerInfo, setCustomerInfo] = useState(() => JSON.parse(localStorage.getItem('vitrine_customer')) || null);
   const [loginMode, setLoginMode] = useState('login'); // 'login' | 'register'
   const [loginForm, setLoginForm] = useState({ name: '', cnpj: '', phone: '', cpf: '', email: '' });
+
+  useEffect(() => {
+    // Keep-alive para evitar que o servidor do Render entre em suspensão
+    const keepAlive = setInterval(() => {
+      fetch('/').catch(() => {});
+    }, 5 * 60 * 1000); // 5 minutos
+    return () => clearInterval(keepAlive);
+  }, []);
   
   const [catalog, setCatalog] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -67,6 +75,16 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeTab, setActiveTab] = useState('produtos'); // produtos, ofertas, cupons
   const [viewingDeal, setViewingDeal] = useState(null);
+  
+  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('vitrine_favorites')) || []);
+  const toggleFavorite = (item) => {
+    setFavorites(prev => {
+      const exists = prev.find(f => f.sku === item.sku);
+      const newFavs = exists ? prev.filter(f => f.sku !== item.sku) : [...prev, item];
+      localStorage.setItem('vitrine_favorites', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  };
 
   // Módulo de Pagamento com Cartão
   const [savedCards, setSavedCards] = useState(() => JSON.parse(localStorage.getItem('vitrine_saved_cards')) || []);
@@ -1082,6 +1100,12 @@ function App() {
 
         <div onClick={() => { setActiveTab('ofertas'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'ofertas' ? 'bold' : 'normal' }}>Ofertas</div>
         <div onClick={() => { setActiveTab('cupons'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'cupons' ? 'bold' : 'normal' }}>Cupons</div>
+        <div onClick={() => { setActiveTab('favoritos'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'favoritos' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Heart size={16} fill={activeTab === 'favoritos' ? 'var(--primary-color)' : 'none'} color={activeTab === 'favoritos' ? 'var(--primary-color)' : 'currentColor'} /> Favoritos
+        </div>
+        <div onClick={() => { setActiveTab('sugestoes'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'sugestoes' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Sparkles size={16} color="var(--primary-color)" /> Sugestões
+        </div>
       </div>
 
       <div className="app-container" style={{ padding: '0 5%' }}>
@@ -1089,11 +1113,11 @@ function App() {
       <main className="main-content" style={{ marginTop: '2rem' }}>
         <div className="toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
-            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis'))}
+            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis'))))}
           </h2>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, justifyContent: 'flex-end', position: 'relative' }}>
-            {activeTab === 'produtos' && (
+            {(activeTab === 'produtos' || activeTab === 'favoritos' || activeTab === 'sugestoes') && (
               <div style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
                 <input 
                   type="text" 
@@ -1299,12 +1323,27 @@ function App() {
               })
             )
           ) : (
-          catalog.filter(item => {
-            if (activeTab === 'ofertas' && !item.isOffer) return false;
-            if (selectedCategory && item.category !== selectedCategory) return false;
-            if (searchTerm && !(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(item.sku || '').toLowerCase().includes(searchTerm.toLowerCase())) return false;
-            return true;
-          }).map(item => {
+          (() => {
+            let displayedCatalog = catalog;
+            if (activeTab === 'favoritos') {
+              displayedCatalog = favorites;
+            } else if (activeTab === 'sugestoes') {
+              const favCategories = favorites.map(f => f.category);
+              const purchasedCategories = deals.filter(d => d.customerCpf === customerInfo?.cpf || d.client === customerInfo?.name).flatMap(d => d.products.map(p => catalog.find(c => c.sku === p.sku)?.category)).filter(Boolean);
+              const prefCategories = [...new Set([...favCategories, ...purchasedCategories])];
+              if (prefCategories.length === 0) {
+                displayedCatalog = [...catalog].sort((a,b) => (b.sold || 0) - (a.sold || 0)).slice(0, 10);
+              } else {
+                displayedCatalog = catalog.filter(item => prefCategories.includes(item.category));
+              }
+            }
+            return displayedCatalog.filter(item => {
+              if (activeTab === 'ofertas' && !item.isOffer) return false;
+              if (selectedCategory && item.category !== selectedCategory) return false;
+              if (searchTerm && !(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(item.sku || '').toLowerCase().includes(searchTerm.toLowerCase())) return false;
+              return true;
+            });
+          })().map(item => {
             const status = getStatusConfig(item.quantity);
             return (
               <div 
@@ -1318,6 +1357,9 @@ function App() {
                     Frete Grátis
                   </div>
                 )}
+                <div style={{ position: 'absolute', top: '10px', left: item.freeShipping ? '100px' : '10px', zIndex: 11, cursor: 'pointer', background: 'white', borderRadius: '50%', padding: '0.4rem', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', display: 'flex' }} onClick={(e) => { e.stopPropagation(); toggleFavorite(item); }}>
+                  <Heart size={18} fill={favorites.find(f => f.sku === item.sku) ? 'var(--danger)' : 'none'} color={favorites.find(f => f.sku === item.sku) ? 'var(--danger)' : '#666'} />
+                </div>
                 {item.quantity <= 15 && item.quantity > 0 && (
                   <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--danger)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10 }}>
                     🔥 Últimas Unidades
@@ -2262,30 +2304,27 @@ function App() {
                         </div>
 
                         {/* Informações da Compra (Nota Fiscal) */}
-                        {deal.shippingStatus === 'Entregue' && (
-                          <div style={{ background: '#fff', border: '1px solid #ddd', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-                            <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '0.9rem' }}>Informações da compra</h4>
-                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                              <div style={{ width: '40px', height: '40px', background: '#f5f5f5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-                                📄
-                              </div>
-                              <div>
-                                <div style={{ fontSize: '0.85rem', color: '#333' }}>Gerada em {new Date(deal.date).toLocaleDateString()}</div>
-                                {deal.chaveAcesso ? (
-                                  <>
-                                    {deal.nfePdfUrl ? (
-                                      <a href={deal.nfePdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#00a650', textDecoration: 'none', display: 'inline-block', marginRight: '10px' }}>Baixar PDF da NFe ▾</a>
-                                    ) : null}
-                                    <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Consultar Nota Fiscal ▾</a>
-                                  </>
-
-                                ) : (
-                                  <span style={{ fontSize: '0.8rem', color: '#999' }}>Nota fiscal ainda não emitida</span>
-                                )}
-                              </div>
+                        <div style={{ background: '#fff', border: '1px solid #ddd', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '0.9rem' }}>Informações da compra</h4>
+                          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <div style={{ width: '40px', height: '40px', background: '#f5f5f5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                              📄
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', color: '#333' }}>Gerada em {new Date(deal.date).toLocaleDateString()}</div>
+                              {deal.chaveAcesso ? (
+                                <>
+                                  {deal.nfePdfUrl ? (
+                                    <a href={deal.nfePdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#00a650', textDecoration: 'none', display: 'inline-block', marginRight: '10px' }}>Baixar PDF da NFe ▾</a>
+                                  ) : null}
+                                  <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Consultar Nota Fiscal ▾</a>
+                                </>
+                              ) : (
+                                <span style={{ fontSize: '0.8rem', color: '#999' }}>Nota fiscal ainda não emitida</span>
+                              )}
                             </div>
                           </div>
-                        )}
+                        </div>
 
                         {deal.shippingStatus === 'Entregue' && (
                           <div style={{ textAlign: 'center' }}>
@@ -2396,7 +2435,9 @@ function App() {
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button 
                             style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold' }}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               setShowMeusPedidosModal(false);
                               setReviewForm({ 
                                 dealId: deal.id, 
@@ -2647,9 +2688,16 @@ function App() {
                 <div style={{ margin: '1rem 0 0 0', fontSize: '1.8rem', fontWeight: 'bold', color: viewingProduct.isOffer ? 'var(--danger)' : 'var(--primary-color)' }}>
                   R$ {Number(viewingProduct.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </div>
-                <div style={{ fontSize: '0.95rem', color: '#00a650', marginBottom: '1rem', fontWeight: '500' }}>
-                  em 10x de R$ {(Number(viewingProduct.price) / 10).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} sem juros
-                </div>
+                {viewingProduct.allowInstallments && viewingProduct.maxInstallments > 1 && (
+                  <div style={{ fontSize: '0.95rem', color: '#00a650', marginBottom: '1rem', fontWeight: '500' }}>
+                    em {viewingProduct.maxInstallments}x de R$ {(() => {
+                      const basePrice = Number(viewingProduct.price);
+                      const installments = Number(viewingProduct.maxInstallments);
+                      const finalPrice = viewingProduct.hasInterest ? basePrice * (1 + (Number(viewingProduct.interestRate || 0) / 100)) : basePrice;
+                      return (finalPrice / installments).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    })()} {viewingProduct.hasInterest ? 'com juros' : 'sem juros'}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
                     className="btn-secondary" 
