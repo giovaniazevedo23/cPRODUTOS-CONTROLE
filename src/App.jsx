@@ -513,7 +513,7 @@ function App() {
             'X-Idempotency-Key': Date.now().toString()
           },
           body: JSON.stringify({
-            transaction_amount: total,
+            transaction_amount: Number(total.toFixed(2)),
             description: "Pedido GESTE",
             payment_method_id: "pix",
             payer: {
@@ -590,7 +590,9 @@ function App() {
         return;
       }
 
-      const total = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
+      const subtotal = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
+      const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+      const total = subtotal - couponDiscountAmt;
       const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
 
       const form = mp.cardForm({
@@ -631,7 +633,7 @@ function App() {
                   'X-Idempotency-Key': Date.now().toString()
                 },
                 body: JSON.stringify({
-                  transaction_amount: Number(amount),
+                  transaction_amount: Number(total.toFixed(2)),
                   token,
                   description: 'Pedido GESTE',
                   installments: Number(inst) || installments || 1,
@@ -678,6 +680,16 @@ function App() {
       }
     };
   }, [showMpCardForm]);
+
+  useEffect(() => {
+    if (appliedCoupon && appliedCoupon.minPurchaseValue) {
+      const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
+      if (subtotal < appliedCoupon.minPurchaseValue) {
+        alert(`O cupom ${appliedCoupon.code} foi removido pois exige um valor mínimo de compra de R$ ${appliedCoupon.minPurchaseValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}.`);
+        setAppliedCoupon(null);
+      }
+    }
+  }, [cart, appliedCoupon]);
 
   const handleSendInternalMessage = async (e) => {
     e.preventDefault();
@@ -2581,10 +2593,18 @@ function App() {
                   </div>
                 )}
                 {viewingProduct.imageUrls && viewingProduct.imageUrls.length > 0 ? (
-                  <div style={{ display: 'flex', overflowX: 'auto', gap: '1rem', scrollSnapType: 'x mandatory', paddingBottom: '0.5rem' }}>
-                    {viewingProduct.imageUrls.map((url, idx) => (
-                      <img key={idx} src={url} alt={`${viewingProduct.name} ${idx}`} style={{ flexShrink: 0, width: '100%', height: '300px', objectFit: 'contain', scrollSnapAlign: 'start' }} />
-                    ))}
+                  <div style={{ position: 'relative' }}>
+                    <div id="product-image-carousel" style={{ display: 'flex', overflowX: 'auto', gap: '1rem', scrollSnapType: 'x mandatory', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
+                      {viewingProduct.imageUrls.map((url, idx) => (
+                        <img key={idx} src={url} alt={`${viewingProduct.name} ${idx}`} style={{ flexShrink: 0, width: '100%', height: '300px', objectFit: 'contain', scrollSnapAlign: 'start' }} />
+                      ))}
+                    </div>
+                    {viewingProduct.imageUrls.length > 1 && (
+                      <>
+                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: -300, behavior: 'smooth'})} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&lt;</button>
+                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: 300, behavior: 'smooth'})} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&gt;</button>
+                      </>
+                    )}
                   </div>
                 ) : viewingProduct.imageUrl ? (
                   <img src={viewingProduct.imageUrl} alt={viewingProduct.name} style={{ width: '100%', height: '300px', objectFit: 'contain' }} />
@@ -2594,7 +2614,7 @@ function App() {
                   </div>
                 )}
                 {viewingProduct.imageUrls && viewingProduct.imageUrls.length > 1 && (
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#888', margin: '0.5rem 0 0 0' }}>Deslize para ver mais fotos ↔️</p>
+                  <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#888', margin: '0.5rem 0 0 0' }}>Deslize ou use as setas para ver mais fotos</p>
                 )}
               </div>
               
