@@ -59,7 +59,7 @@ function App() {
   const [reviewData, setReviewData] = useState({ salesperson: '', stars: 5, comment: '' });
   const [viewingProfile, setViewingProfile] = useState(null); // Vendedor
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileData, setProfileData] = useState({ birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '' });
+  const [profileData, setProfileData] = useState({ name: '', email: '', phone: '', birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '', profileImage: '' });
   const [showMyProfile, setShowMyProfile] = useState(false);
   const [showMeusPedidosModal, setShowMeusPedidosModal] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -267,12 +267,16 @@ function App() {
   useEffect(() => {
     if (customerInfo && customerInfo.cpf) {
       setProfileData({
+        name: customerInfo.name || '',
+        email: customerInfo.email || '',
+        phone: customerInfo.phone || '',
         birthday: customerInfo.birthday || '',
         address: customerInfo.address || '',
         neighborhood: customerInfo.neighborhood || '',
         zip: customerInfo.zip || '',
         city: customerInfo.city || '',
-        state: customerInfo.state || ''
+        state: customerInfo.state || '',
+        profileImage: customerInfo.profileImage || ''
       });
     }
   }, [customerInfo]);
@@ -1965,36 +1969,53 @@ function App() {
       {/* Modal Meu Perfil */}
       {showProfileModal && (
         <div className="modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>Meu Perfil</h2>
               <button className="close-btn" onClick={() => setShowProfileModal(false)}>×</button>
             </div>
             <form onSubmit={handleSaveProfile}>
               {/* Avatar e Info Principal */}
-              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary-color)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', margin: '0 auto 0.75rem auto' }}>
-                  {customerInfo?.name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem', position: 'relative' }}>
+                <label style={{ cursor: 'pointer', display: 'inline-block' }}>
+                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary-color)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', margin: '0 auto 0.25rem auto', overflow: 'hidden', border: '2px solid var(--primary-color)' }}>
+                    {profileData.profileImage ? (
+                      <img src={profileData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      customerInfo?.name?.charAt(0)?.toUpperCase() || '?'
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Alterar foto</div>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setProfileData({ ...profileData, profileImage: reader.result });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </label>
                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{customerInfo?.name || 'Usuário'}</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{customerInfo?.email || ''}</div>
               </div>
-              {/* Campos principais (somente leitura) */}
+              {/* Campos principais editáveis */}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Nome Completo</label>
-                <input type="text" value={customerInfo?.name || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+                <input type="text" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>CPF</label>
-                <input type="text" value={customerInfo?.cpf || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+                <input type="text" value={customerInfo?.cpf || ''} disabled title="O CPF não pode ser alterado" style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Email</label>
-                <input type="text" value={customerInfo?.email || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+                <input type="email" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Telefone</label>
-                <input type="text" value={customerInfo?.phone || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+                <input type="text" value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} />
               </div>
               <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '1rem 0' }} />
               {/* Campos editáveis */}
@@ -2101,10 +2122,10 @@ function App() {
             </div>
             
             <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {deals.filter(d => d.customerCpf === customerInfo.cpf || d.client === customerInfo.name).length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Você ainda não fez nenhuma compra nesta loja.</p>
+              {deals.filter(d => (d.customerCpf === customerInfo.cpf || d.client === customerInfo.name) && d.shippingStatus !== 'Entregue').length === 0 ? (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Você não possui compras em andamento nesta loja.</p>
               ) : (
-                                deals.filter(d => d.customerCpf === customerInfo.cpf || d.client === customerInfo.name).map(deal => (
+                deals.filter(d => (d.customerCpf === customerInfo.cpf || d.client === customerInfo.name) && d.shippingStatus !== 'Entregue').map(deal => (
                   <div 
                     key={deal.id} 
                     style={{ background: 'white', border: '1px solid var(--glass-border)', borderRadius: '0.5rem', padding: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}
