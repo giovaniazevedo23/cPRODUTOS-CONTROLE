@@ -43,8 +43,22 @@ function App() {
     const keepAlive = setInterval(() => {
       fetch('/').catch(() => {});
     }, 5 * 60 * 1000); // 5 minutos
+    
+    // Rastreamento de acessos ao site de compras
+    if (customerInfo && customerInfo.cnpj) {
+      if (!sessionStorage.getItem('visited')) {
+        sessionStorage.setItem('visited', 'true');
+        import('firebase/firestore').then(({ addDoc, collection }) => {
+          addDoc(collection(db, 'pageViews'), {
+            companyCnpj: customerInfo.cnpj,
+            timestamp: new Date().toISOString()
+          }).catch(console.error);
+        });
+      }
+    }
+    
     return () => clearInterval(keepAlive);
-  }, []);
+  }, [customerInfo]);
   
   const [catalog, setCatalog] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -63,6 +77,8 @@ function App() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
+  const [supportAttachment, setSupportAttachment] = useState(null);
+  const [chatAttachment, setChatAttachment] = useState(null);
   const [isSupportSending, setIsSupportSending] = useState(false);
   const [reviewData, setReviewData] = useState({ salesperson: '', stars: 5, comment: '' });
   const [viewingProfile, setViewingProfile] = useState(null); // Vendedor
@@ -211,6 +227,12 @@ function App() {
       }
     } else {
       if (loginForm.name && loginForm.cnpj && loginForm.phone && loginForm.email) {
+        const custRefCheck = doc(db, 'customers', cpfClean);
+        const custSnapCheck = await getDoc(custRefCheck);
+        if (custSnapCheck.exists()) {
+          alert('Esse CPF já está vinculado a outro cadastro.');
+          return;
+        }
         const customerObj = {
           name: loginForm.name,
           cpf: loginForm.cpf,
@@ -722,6 +744,7 @@ function App() {
         sender: customerInfo.name,
         role: 'client',
         text: internalChat.msg,
+        attachment: chatAttachment,
         date: new Date().toISOString()
       }];
 
@@ -738,6 +761,7 @@ function App() {
         messages: newMessages
       });
       setInternalChat(prev => ({ ...prev, msg: '' }));
+      setChatAttachment(null);
     } catch (err) {
       console.error(err);
       alert('Erro ao enviar mensagem.');
@@ -2798,6 +2822,7 @@ function App() {
                         <div style={{ fontSize: '0.9rem', color: '#333', wordBreak: 'break-word' }}>
                           {m.text}
                         </div>
+                        {m.attachment && <div style={{ marginTop: '0.5rem' }}><img src={m.attachment} alt="Anexo" style={{ maxWidth: '100%', borderRadius: '4px', maxHeight: '200px' }} /></div>}
                         <div style={{ fontSize: '0.65rem', color: '#999', textAlign: 'right', marginTop: '0.25rem' }}>
                           {new Date(m.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
@@ -2814,8 +2839,19 @@ function App() {
                 placeholder="Digite sua mensagem..." 
                 value={internalChat.msg}
                 onChange={e => setInternalChat({...internalChat, msg: e.target.value})}
-                style={{ flex: 1, padding: '0.75rem', borderRadius: '2rem', border: '1px solid #ccc' }}
+                style={{ flex: 1, padding: '0.75rem 2.5rem 0.75rem 0.75rem', borderRadius: '2rem', border: '1px solid #ccc' }}
               />
+              <label style={{ position: 'absolute', right: '90px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#666', marginTop: '12px' }}>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setChatAttachment(reader.result);
+                    reader.readAsDataURL(file);
+                  }
+                }} />
+                <span style={{ fontSize: '1.2rem', color: chatAttachment ? 'var(--primary-color)' : 'inherit' }}>📎</span>
+              </label>
               <button type="submit" className="btn-primary" style={{ borderRadius: '2rem', padding: '0.75rem 1.5rem' }}>
                 Enviar
               </button>
@@ -2893,11 +2929,41 @@ function App() {
                   {
                     to_email: 'geste.suporte@gmail.com',
                     subject: `Novo Chamado de Suporte de ${customerInfo?.name || 'Cliente'}`,
-                    html_message: `<p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>`
+                    html_message: `<p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>` + (supportAttachment ? `<br/><p><strong>Anexo:</strong></p><img src="${supportAttachment}" style="max-width:100%; max-height:400px;" />` : '')
                   },
                   { publicKey: 'mNLHg4WMPI_KmzA8c' }
                 );
-                alert("Mensagem enviada com sucesso! Entraremos em contato em breve.");
+                
+                // Envio do e-mail automático para o cliente (Protocolo)
+                if (customerInfo?.email) {
+                  const protocolo = Math.floor(100000 + Math.random() * 900000);
+                  const autoReplyHtml = `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+                      <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #007bff; margin: 0; font-size: 28px;">GESTE</h1>
+                      </div>
+                      <p>Olá, ${customerInfo.name || 'Cliente'}, recebemos sua mensagem.</p>
+                      <p>Este é o seu número de protocolo de atendimento: <strong>#${protocolo}</strong>.</p>
+                      <p>Os documentos e processos que você enviou já estão sendo analisados.</p>
+                      <p>Dentro de alguns instantes alguém da nossa equipe vai responder. Fique atento(a) à sua caixa de entrada para as próximas 72 horas.</p>
+                      <p style="margin-top: 30px;">Atenciosamente,<br/><strong>Equipe de Suporte GESTE</strong></p>
+                    </div>
+                  `;
+                  
+                  await emailjs.send(
+                    'service_n2k30o9',
+                    'template_tht2nks',
+                    {
+                      to_email: customerInfo.email,
+                      subject: `Recebemos sua solicitação - Protocolo #${protocolo}`,
+                      html_message: autoReplyHtml
+                    },
+                    { publicKey: 'mNLHg4WMPI_KmzA8c' }
+                  ).catch(e => console.error("Erro no auto-reply", e));
+                }
+
+                alert("Mensagem enviada com sucesso! Um e-mail com o protocolo foi enviado para você.");
+                setSupportAttachment(null);
                 setShowSupportModal(false);
                 setSupportMessage('');
               } catch (err) {
@@ -2915,6 +2981,21 @@ function App() {
                   onChange={(e) => setSupportMessage(e.target.value)}
                   style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', resize: 'vertical' }}
                 />
+                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center' }}>
+                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', color: supportAttachment ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 2 * 1024 * 1024) return alert('O arquivo deve ter no máximo 2MB');
+                        const reader = new FileReader();
+                        reader.onloadend = () => setSupportAttachment(reader.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }} />
+                    <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>📎</span>
+                    {supportAttachment ? 'Imagem anexada com sucesso (Clique para trocar)' : 'Anexar uma imagem/comprovante'}
+                  </label>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
