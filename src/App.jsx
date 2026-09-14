@@ -1971,6 +1971,33 @@ function App() {
               <button className="close-btn" onClick={() => setShowProfileModal(false)}>×</button>
             </div>
             <form onSubmit={handleSaveProfile}>
+              {/* Avatar e Info Principal */}
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary-color)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', margin: '0 auto 0.75rem auto' }}>
+                  {customerInfo?.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{customerInfo?.name || 'Usuário'}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{customerInfo?.email || ''}</div>
+              </div>
+              {/* Campos principais (somente leitura) */}
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Nome Completo</label>
+                <input type="text" value={customerInfo?.name || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>CPF</label>
+                <input type="text" value={customerInfo?.cpf || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Email</label>
+                <input type="text" value={customerInfo?.email || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label>Telefone</label>
+                <input type="text" value={customerInfo?.phone || ''} disabled style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+              </div>
+              <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '1rem 0' }} />
+              {/* Campos editáveis */}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Data de Nascimento</label>
                 <input 
@@ -2187,7 +2214,11 @@ function App() {
                               </div>
                               <div>
                                 <div style={{ fontSize: '0.85rem', color: '#333' }}>Gerada em {new Date(deal.date).toLocaleDateString()}</div>
-                                <a href="#" onClick={(e) => { e.preventDefault(); alert('Iniciando download da Nota Fiscal (DANFE)...'); }} style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Baixar nota fiscal ▾</a>
+                                {deal.chaveAcesso ? (
+                                  <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Consultar Nota Fiscal ▾</a>
+                                ) : (
+                                  <span style={{ fontSize: '0.8rem', color: '#999' }}>Nota fiscal ainda não emitida</span>
+                                )}
                               </div>
                             </div>
                           </div>
