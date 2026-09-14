@@ -2215,7 +2215,13 @@ function App() {
                               <div>
                                 <div style={{ fontSize: '0.85rem', color: '#333' }}>Gerada em {new Date(deal.date).toLocaleDateString()}</div>
                                 {deal.chaveAcesso ? (
-                                  <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Consultar Nota Fiscal ▾</a>
+                                  <>
+                                    {deal.nfePdfUrl ? (
+                                      <a href={deal.nfePdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#00a650', textDecoration: 'none', display: 'inline-block', marginRight: '10px' }}>Baixar PDF da NFe ▾</a>
+                                    ) : null}
+                                    <a href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none' }}>Consultar Nota Fiscal ▾</a>
+                                  </>
+
                                 ) : (
                                   <span style={{ fontSize: '0.8rem', color: '#999' }}>Nota fiscal ainda não emitida</span>
                                 )}
