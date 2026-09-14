@@ -737,6 +737,30 @@ function App() {
     }
   };
 
+  const handleProductReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewForm) return;
+    try {
+      const reviewId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+      await setDoc(doc(db, 'product_reviews', reviewId), {
+        dealId: reviewForm.dealId,
+        productId: reviewForm.productId,
+        productName: reviewForm.productName,
+        stars: reviewForm.stars,
+        comment: reviewForm.comment,
+        photo: reviewForm.photo || '',
+        customerName: customerInfo?.name || 'Anônimo',
+        customerCpf: customerInfo?.cpf || '',
+        date: new Date().toISOString()
+      });
+      alert('Avaliação enviada com sucesso! Obrigado!');
+      setReviewForm(null);
+    } catch (err) {
+      console.error('Erro ao enviar avaliação:', err);
+      alert('Erro ao enviar avaliação. Tente novamente.');
+    }
+  };
+
   if (!customerInfo) {
     return (
       <div className="app-container" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh', display: 'flex' }}>
@@ -2364,8 +2388,8 @@ function App() {
                               setShowMeusPedidosModal(false);
                               setReviewForm({ 
                                 dealId: deal.id, 
-                                productId: deal.products[0]?.sku, 
-                                productName: deal.products[0]?.name,
+                                productId: deal.products?.[0]?.sku || '', 
+                                productName: deal.products?.[0]?.name || 'Produto',
                                 stars: 5, 
                                 comment: '', 
                                 photo: '' 
@@ -2374,6 +2398,29 @@ function App() {
                           >
                             Avaliar Agora
                           </button>
+                          {(deal.nfePdfUrl || deal.chaveAcesso) && (
+                            deal.nfePdfUrl ? (
+                              <a
+                                href={deal.nfePdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ background: '#0a8754', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Baixar Nota Fiscal
+                              </a>
+                            ) : (
+                              <a
+                                href={`https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConteudo=XbSeqxE8pl8=&tipoConsulta=resumo&nfe=${deal.chaveAcesso}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ background: '#0a8754', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                Ver Nota Fiscal
+                              </a>
+                            )
+                          )}
                         <button 
                           style={{ background: '#ee4d2d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2px', cursor: 'pointer', fontWeight: 'bold' }}
                           onClick={() => { setShowMeusPedidosModal(false); setInternalChat({ dealId: deal.id, msg: '' }); }}
