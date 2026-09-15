@@ -399,7 +399,8 @@ function App() {
     if (cart.length === 0) return;
     
     const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
-    const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+    const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
+      const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
     const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
     const total = subtotal - couponDiscountAmt - pixDiscountAmt;
     
@@ -423,6 +424,26 @@ function App() {
 
     try {
       await setDoc(doc(db, 'deals', deal.id), deal);
+        
+        if (appliedCoupon) {
+          const couponRef = doc(db, 'coupons', appliedCoupon.id);
+          const couponDoc = await getDoc(couponRef);
+          if (couponDoc.exists()) {
+            await updateDoc(couponRef, {
+              usedCount: (couponDoc.data().usedCount || 0) + 1
+            });
+          }
+        }
+        
+        if (appliedCoupon) {
+          const couponRef = doc(db, 'coupons', appliedCoupon.id);
+          const couponDoc = await getDoc(couponRef);
+          if (couponDoc.exists()) {
+            await updateDoc(couponRef, {
+              usedCount: (couponDoc.data().usedCount || 0) + 1
+            });
+          }
+        }
       
       for (const item of cart) {
         try {
@@ -542,7 +563,8 @@ function App() {
       setIsPixLoading(true);
       try {
         const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
-        const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+        const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
+                        const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
         const pixDiscountAmt = ((subtotal - couponDiscountAmt) * 0.05);
         const total = subtotal - couponDiscountAmt - pixDiscountAmt;
         const response = await fetch('/mp-api/v1/payments', {
@@ -631,7 +653,8 @@ function App() {
       }
 
       const subtotal = cart.reduce((a, c) => a + (c.price * c.cartQuantity), 0);
-      const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+      const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
+      const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
       const total = subtotal - couponDiscountAmt;
       const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
 
@@ -1610,16 +1633,14 @@ function App() {
                   {!appliedCoupon && coupons.filter(c => 
                     new Date(c.expireDate) >= new Date() && 
                     (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) &&
-                    (!c.targetCpf || c.targetCpf === customerInfo.cpf)
-                  ).length > 0 && (
+                    (!c.targetCpf || c.targetCpf === customerInfo.cpf) && (!c.minPurchaseValue || cart.reduce((a,item) => a + (item.price * item.cartQuantity), 0) >= c.minPurchaseValue)).length > 0 && (
                     <div style={{ marginBottom: '1rem' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Cupons Disponíveis:</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {coupons.filter(c => 
                           new Date(c.expireDate) >= new Date() && 
                           (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) &&
-                          (!c.targetCpf || c.targetCpf === customerInfo.cpf)
-                        ).map(c => (
+                          (!c.targetCpf || c.targetCpf === customerInfo.cpf) && (!c.minPurchaseValue || cart.reduce((a,item) => a + (item.price * item.cartQuantity), 0) >= c.minPurchaseValue)).map(c => (
                           <div 
                             key={c.id} 
                             style={{ background: 'var(--primary-color)', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.8rem', cursor: 'pointer' }}
@@ -1643,7 +1664,7 @@ function App() {
                   {appliedCoupon && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#00a650' }}>
                       <span>Desconto do Cupom ({appliedCoupon.discount}%)</span>
-                      <span>- R$ {(cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0) * appliedCoupon.discount / 100).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      <span>- R$ {(cart.reduce((max, c) => c.price > max ? c.price : max, 0) * appliedCoupon.discount / 100).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                   )}
 
@@ -1652,7 +1673,8 @@ function App() {
                     <span style={{ color: 'var(--primary-color)' }}>
                       R$ {(() => {
                         const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
-                        const couponDiscountAmt = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+                        const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
+      const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
                         const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
                         return (subtotal - couponDiscountAmt - pixDiscountAmt).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                       })()}
