@@ -233,12 +233,21 @@ function App() {
     const cpfClean = loginForm.cpf.replace(/\D/g, '');
 
     if (loginMode === 'login') {
-      const custRef = doc(db, 'customers', cpfClean);
-      const custSnap = await getDoc(custRef);
-      if (custSnap.exists()) {
-        setCustomerInfo(custSnap.data());
-      } else {
-        alert("Cliente não encontrado. Por favor, crie uma conta.");
+      try {
+        const custRef = doc(db, 'customers', cpfClean);
+        const custSnap = await getDoc(custRef);
+        if (custSnap.exists()) {
+          setCustomerInfo(custSnap.data());
+        } else {
+          alert("Cliente não encontrado. Por favor, crie uma conta.");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        if (error.code === 'permission-denied') {
+          alert("ERRO DE PERMISSÃO: O banco de dados bloqueou o acesso. As Regras de Segurança do Firebase precisam ser ajustadas para permitir leitura.");
+        } else {
+          alert("Erro ao fazer login: " + error.message);
+        }
       }
     } else {
       if (loginForm.name && loginForm.cnpj && loginForm.phone && loginForm.email) {
