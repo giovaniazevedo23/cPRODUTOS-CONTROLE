@@ -429,7 +429,7 @@ function App() {
     const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
     const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
       const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
-    const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
+    const pixDiscountAmt = 0;
     const total = subtotal - couponDiscountAmt - pixDiscountAmt;
     
     const deal = {
@@ -457,8 +457,10 @@ function App() {
           const couponRef = doc(db, 'coupons', appliedCoupon.id);
           const couponDoc = await getDoc(couponRef);
           if (couponDoc.exists()) {
-            await updateDoc(couponRef, {
-              usedCount: (couponDoc.data().usedCount || 0) + 1
+            const currentUsedBy = couponDoc.data().usedBy || [];
+              const updatedUsedBy = customerInfo && customerInfo.cpf ? [...currentUsedBy, customerInfo.cpf] : currentUsedBy;
+              await updateDoc(couponRef, {
+              usedCount: (couponDoc.data().usedCount || 0) + 1, usedBy: updatedUsedBy
             });
           }
         }
@@ -467,8 +469,10 @@ function App() {
           const couponRef = doc(db, 'coupons', appliedCoupon.id);
           const couponDoc = await getDoc(couponRef);
           if (couponDoc.exists()) {
-            await updateDoc(couponRef, {
-              usedCount: (couponDoc.data().usedCount || 0) + 1
+            const currentUsedBy = couponDoc.data().usedBy || [];
+              const updatedUsedBy = customerInfo && customerInfo.cpf ? [...currentUsedBy, customerInfo.cpf] : currentUsedBy;
+              await updateDoc(couponRef, {
+              usedCount: (couponDoc.data().usedCount || 0) + 1, usedBy: updatedUsedBy
             });
           }
         }
@@ -508,7 +512,9 @@ function App() {
           const couponRef = doc(db, 'coupons', appliedCoupon.id);
           const couponDoc = await getDoc(couponRef);
           if (couponDoc.exists()) {
-            await updateDoc(couponRef, { usedCount: (couponDoc.data().usedCount || 0) + 1 });
+            const currentUsedBy = couponDoc.data().usedBy || [];
+              const updatedUsedBy = customerInfo && customerInfo.cpf ? [...currentUsedBy, customerInfo.cpf] : currentUsedBy;
+              await updateDoc(couponRef, { usedCount: (couponDoc.data().usedCount || 0) + 1, usedBy: updatedUsedBy });
           }
         } catch (e) { console.error('Erro ao atualizar cupom', e); }
       }
@@ -1344,6 +1350,7 @@ function App() {
             ) : (
               coupons.map(coupon => {
                 const isExhausted = coupon.usageLimit && (coupon.usedCount || 0) >= coupon.usageLimit;
+                  const alreadyUsed = customerInfo && coupon.usedBy && coupon.usedBy.includes(customerInfo.cpf);
                 const isExpired = new Date(coupon.expireDate) < new Date();
                 const isUnavailable = isExhausted || isExpired;
                 return (
@@ -1639,6 +1646,7 @@ function App() {
                             if (c.code !== couponInput) return false;
                             if (new Date(c.expireDate) < new Date()) return false;
                             if (c.usageLimit && (c.usedCount || 0) >= c.usageLimit) return false;
+                              if (customerInfo && c.usedBy && c.usedBy.includes(customerInfo.cpf)) return false;
                             return true;
                           });
                           
@@ -1662,14 +1670,14 @@ function App() {
                   {/* Cupons Disponíveis */}
                   {!appliedCoupon && coupons.filter(c => 
                     new Date(c.expireDate) >= new Date() && 
-                    (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) &&
+                    (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) && (!customerInfo || !c.usedBy || !c.usedBy.includes(customerInfo.cpf)) &&
                     (!c.targetCpf || c.targetCpf === customerInfo.cpf) && (!c.minPurchaseValue || cart.reduce((a,item) => a + (item.price * item.cartQuantity), 0) >= c.minPurchaseValue)).length > 0 && (
                     <div style={{ marginBottom: '1rem' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Cupons Disponíveis:</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {coupons.filter(c => 
                           new Date(c.expireDate) >= new Date() && 
-                          (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) &&
+                          (!c.usageLimit || (c.usedCount || 0) < c.usageLimit) && (!customerInfo || !c.usedBy || !c.usedBy.includes(customerInfo.cpf)) &&
                           (!c.targetCpf || c.targetCpf === customerInfo.cpf) && (!c.minPurchaseValue || cart.reduce((a,item) => a + (item.price * item.cartQuantity), 0) >= c.minPurchaseValue)).map(c => (
                           <div 
                             key={c.id} 
@@ -1705,7 +1713,7 @@ function App() {
                         const subtotal = cart.reduce((a,c) => a + (c.price * c.cartQuantity), 0);
                         const maxPriceItem = cart.reduce((max, c) => c.price > max ? c.price : max, 0);
       const couponDiscountAmt = appliedCoupon ? (maxPriceItem * appliedCoupon.discount / 100) : 0;
-                        const pixDiscountAmt = checkoutMethod === 'PIX' ? ((subtotal - couponDiscountAmt) * 0.05) : 0;
+                        const pixDiscountAmt = 0;
                         return (subtotal - couponDiscountAmt - pixDiscountAmt).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                       })()}
                     </span>
@@ -1715,7 +1723,7 @@ function App() {
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                   <label>Forma de Pagamento</label>
                   <select value={checkoutMethod} onChange={e => setCheckoutMethod(e.target.value)}>
-                    <option value="PIX">PIX (5% Desconto Adicional)</option>
+                    <option value="PIX">PIX</option>
                     <option value="Cartão de Crédito">Cartão de Crédito (Até 12x)</option>
                   </select>
                 </div>
