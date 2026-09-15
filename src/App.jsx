@@ -249,7 +249,7 @@ function App() {
           const welcomeHtml = `
             <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
               <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #007bff; margin: 0; font-size: 28px;">GESTE</h1>
+                <h1 style="color: #FF921C; margin: 0; font-size: 28px;">GESTE</h1>
               </div>
               <p style="font-size: 16px;">Olá, <strong>${loginForm.name}</strong>,</p>
               <p style="font-size: 16px;">Seja muito bem-vindo(a)! É um prazer enorme ter você com a gente. 🥰</p>
@@ -263,7 +263,7 @@ function App() {
               <p style="font-size: 16px; margin-top: 20px;">Pronto para encontrar o que você procura?</p>
               <p style="font-size: 16px;">Acesse sua conta agora mesmo, escolha a loja da sua preferência e aproveite as novidades!</p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="https://geste.onrender.com" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Explorar Lojas e Produtos</a>
+                <a href="https://geste.onrender.com" style="background-color: #FF921C; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Explorar Lojas e Produtos</a>
               </div>
               <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin-top: 0; color: #555; text-align: center;">Lojas em destaque essa semana:</h3>
@@ -278,7 +278,7 @@ function App() {
               <p style="font-size: 16px; font-weight: bold; margin-top: 0;">Um abraço,<br>Equipe GESTE 💙</p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
               <div style="text-align: center; font-size: 12px; color: #999;">
-                <a href="https://geste.onrender.com" style="color: #007bff; text-decoration: none;">Acesse nosso site</a>
+                <a href="https://geste.onrender.com" style="color: #FF921C; text-decoration: none;">Acesse nosso site</a>
               </div>
             </div>
           `;
@@ -2688,8 +2688,8 @@ function App() {
                     </div>
                     {viewingProduct.imageUrls.length > 1 && (
                       <>
-                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: -300, behavior: 'smooth'})} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&lt;</button>
-                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: 300, behavior: 'smooth'})} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&gt;</button>
+                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: -document.getElementById('product-image-carousel').clientWidth, behavior: 'smooth'})} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&lt;</button>
+                        <button onClick={() => document.getElementById('product-image-carousel').scrollBy({left: document.getElementById('product-image-carousel').clientWidth, behavior: 'smooth'})} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&gt;</button>
                       </>
                     )}
                   </div>
@@ -2964,7 +2964,7 @@ function App() {
                     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: 0 auto; background: #fff; padding: 0; border-radius: 12px; border: 1px solid #eef0f2; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
                       
                       <!-- Header Banner -->
-                      <div style="background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%); padding: 40px 20px; text-align: center; position: relative;">
+                      <div style="background: linear-gradient(135deg, #FF921C 0%, #FFA94D 100%); padding: 40px 20px; text-align: center; position: relative;">
                         <!-- Decorações de fundo -->
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; background-image: radial-gradient(circle at 10% 20%, #fff 0%, transparent 20%), radial-gradient(circle at 90% 80%, #fff 0%, transparent 20%); pointer-events: none;"></div>
                         <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 800; letter-spacing: 2px;">GESTE</h1>
@@ -2975,7 +2975,7 @@ function App() {
                         <h2 style="color: #1a1a1a; font-size: 20px; margin-top: 0;">Olá, ${customerInfo.name || 'Cliente'}! Tudo bem? 👋</h2>
                         <p style="font-size: 16px; line-height: 1.6; color: #4a5568;">Recebemos a sua mensagem e estamos passando para confirmar que a sua solicitação já está em nossas mãos.</p>
                         
-                        <div style="background: #f8fafc; border-left: 4px solid #007bff; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                        <div style="background: #f8fafc; border-left: 4px solid #FF921C; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
                           <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #1a1a1a;">Aqui estão os detalhes do seu atendimento:</h3>
                           <p style="margin: 8px 0; font-size: 15px;">🎫 <strong>Protocolo:</strong> #${protocolo}</p>
                           <p style="margin: 8px 0; font-size: 15px;">📄 <strong>Status:</strong> Os documentos e informações que você enviou já estão em análise.</p>
@@ -3010,7 +3010,7 @@ function App() {
                       
                       <!-- Footer -->
                       <div style="background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <h2 style="color: #007bff; margin: 0 0 10px 0; font-size: 24px; font-weight: 800;">GESTE</h2>
+                        <h2 style="color: #FF921C; margin: 0 0 10px 0; font-size: 24px; font-weight: 800;">GESTE</h2>
                         <a href="https://geste.onrender.com" style="color: #64748b; text-decoration: none; font-size: 14px; font-weight: 500;">www.geste.onrender.com</a>
                         
                         <!-- Redes Sociais Simbólicas -->
