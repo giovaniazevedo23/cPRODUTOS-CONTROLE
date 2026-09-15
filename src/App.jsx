@@ -188,8 +188,10 @@ function App() {
   }, [customerInfo]);
 
   useEffect(() => {
-    if (customerInfo?.email) {
+    if (customerInfo && customerInfo.cpf) {
       localStorage.setItem('vitrine_customer', JSON.stringify(customerInfo));
+    } else {
+      localStorage.removeItem('vitrine_customer');
     }
   }, [customerInfo]);
 
