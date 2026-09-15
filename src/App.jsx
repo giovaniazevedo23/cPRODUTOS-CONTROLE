@@ -3,7 +3,7 @@ import './App.css';
 
 import { collection, query, where, onSnapshot, getDoc, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import logo from './assets/logo.jpg';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import emailjs from '@emailjs/browser';
 import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart, Search, Heart, Sparkles } from 'lucide-react';
 const getStatusConfig = (quantity) => {
@@ -206,6 +206,21 @@ function App() {
       const filtered = prev.filter(p => p.id !== item.id);
       return [item, ...filtered].slice(0, 10);
     });
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!loginForm.email) {
+      alert('Por favor, informe seu E-mail de cadastro no campo "E-mail" e clique em "Esqueci minha senha" novamente.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, loginForm.email);
+      alert('Se o e-mail estiver cadastrado, um link de restauração de senha foi enviado para ele!');
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao enviar e-mail de recuperação.');
+    }
   };
 
   const handleLogin = async (e) => {
@@ -839,102 +854,106 @@ function App() {
   };
 
   if (!customerInfo) {
-    return (
-      <div className="app-container" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh', display: 'flex' }}>
-        <div className="modal-content glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ marginTop: '1rem', color: 'var(--text-primary)' }}>Bem-vindo à Loja</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Identifique-se para acessar o catálogo de produtos.</p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-            <button 
-              type="button" 
-              className={loginMode === 'login' ? 'btn-primary' : 'btn-secondary'} 
-              style={{ flex: 1, padding: '0.5rem' }} 
-              onClick={() => setLoginMode('login')}
-            >
-              Já sou cliente
-            </button>
-            <button 
-              type="button" 
-              className={loginMode === 'register' ? 'btn-primary' : 'btn-secondary'} 
-              style={{ flex: 1, padding: '0.5rem' }} 
-              onClick={() => setLoginMode('register')}
-            >
-              Criar Conta
-            </button>
-          </div>
-
-          <form onSubmit={handleLogin}>
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label>CPF</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="000.000.000-00" 
-                value={loginForm.cpf}
-                onChange={handleCpfChange}
-              />
+      return (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "#fff", zIndex: 9999 }}>
+          <div className="responsive-admin-login-wrapper" style={{ padding: 0, backgroundColor: "#fff", maxWidth: "100vw", borderRadius: 0, border: "none" }}>
+            <div className="responsive-admin-login-form-container">
+              <div className="responsive-admin-login-brand">
+                <img src={logo} alt="Logo" style={{ height: '70px', width: '70px', borderRadius: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} />
+                <h2 style={{ marginTop: '1rem', color: 'var(--text-primary)', fontSize: '1.8rem' }}>Bem-vindo à Loja</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Identifique-se para acessar o catálogo de produtos.</p>
+              </div>
+  
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                <button 
+                  type="button" 
+                  className={loginMode === 'login' ? 'btn-primary' : 'btn-secondary'} 
+                  style={{ flex: 1, padding: '0.75rem', fontWeight: 'bold' }} 
+                  onClick={() => setLoginMode('login')}
+                >
+                  Já sou cliente
+                </button>
+                <button 
+                  type="button" 
+                  className={loginMode === 'register' ? 'btn-primary' : 'btn-secondary'} 
+                  style={{ flex: 1, padding: '0.75rem', fontWeight: 'bold' }} 
+                  onClick={() => setLoginMode('register')}
+                >
+                  Criar Conta
+                </button>
+              </div>
+  
+              <form onSubmit={handleLogin}>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label>CPF</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="000.000.000-00" 
+                    value={loginForm.cpf}
+                    onChange={handleCpfChange}
+                  />
+                </div>
+                
+                {loginMode === 'register' && (
+                  <>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label>CNPJ da Empresa (Fornecedor)</label>
+                      <select 
+                        required 
+                        value={loginForm.cnpj}
+                        onChange={handleCompanyChange}
+                      >
+                        <option value="">Selecione uma empresa...</option>
+                        {companies.map(comp => (
+                          <option key={comp.id || comp.cnpj} value={comp.cnpj}>{comp.name} - {comp.cnpj}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label>Seu Nome Completo</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Ex: João da Silva" 
+                        value={loginForm.name}
+                        onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label>E-mail</label>
+                      <input 
+                        type="email" 
+                        required 
+                        placeholder="seu.email@exemplo.com"
+                        value={loginForm.email}
+                        onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '2rem' }}>
+                      <label>Seu WhatsApp</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="(00) 00000-0000"
+                        value={loginForm.phone}
+                        onChange={handlePhoneChange}
+                        maxLength="15"
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1rem', fontWeight: 'bold', fontSize: '1rem' }}>
+                  {loginMode === 'login' ? 'Entrar no Catálogo' : 'Acessar Catálogo'}
+                </button>
+              </form>
             </div>
-            
-            {loginMode === 'register' && (
-              <>
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label>CNPJ da Empresa (Fornecedor)</label>
-                  <select 
-                    required 
-                    value={loginForm.cnpj}
-                    onChange={handleCompanyChange}
-                  >
-                    <option value="">Selecione uma empresa...</option>
-                    {companies.map(comp => (
-                      <option key={comp.id || comp.cnpj} value={comp.cnpj}>{comp.name} - {comp.cnpj}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label>Seu Nome Completo</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="Ex: João da Silva" 
-                    value={loginForm.name}
-                    onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label>E-mail</label>
-                  <input 
-                    type="email" 
-                    required 
-                    placeholder="seu.email@exemplo.com"
-                    value={loginForm.email}
-                    onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '2rem' }}>
-                  <label>Seu WhatsApp</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="(00) 00000-0000"
-                    value={loginForm.phone}
-                    onChange={handlePhoneChange}
-                    maxLength="15"
-                  />
-                </div>
-              </>
-            )}
-            
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1rem' }}>
-              {loginMode === 'login' ? 'Entrar' : 'Acessar Catálogo'}
-            </button>
-          </form>
+            <div className="responsive-admin-login-image"></div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   return (
     <>
