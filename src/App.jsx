@@ -1305,7 +1305,7 @@ function App() {
           return null;
         })()}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1.5rem' }}>
           {activeTab === 'cupons' ? (
             coupons.length === 0 ? (
               <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)' }}>Nenhum cupom disponível no momento.</p>
@@ -2211,7 +2211,7 @@ function App() {
             {viewedProductsHistory.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Você ainda não visualizou nenhum produto.</p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '1rem' }}>
                 {viewedProductsHistory.map(item => (
                   <div 
                     key={item.id} 

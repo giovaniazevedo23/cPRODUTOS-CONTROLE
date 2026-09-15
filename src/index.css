@@ -61,3 +61,54 @@ h1, h2, h3 {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0,0,0,0.2);
 }
+
+/* Responsive Grid for products (fallback if inline changed) */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* Responsive Login Layout */
+.responsive-login-wrapper {
+  max-width: 450px !important;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 800px) {
+  .responsive-login-wrapper {
+    max-width: 900px !important;
+  }
+  .responsive-login-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    text-align: left !important;
+    padding: 3rem !important;
+    gap: 3rem;
+  }
+  .responsive-login-brand {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid var(--glass-border);
+    padding-right: 3rem;
+  }
+  .responsive-login-brand img {
+    align-self: flex-start;
+  }
+  .responsive-login-form {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
