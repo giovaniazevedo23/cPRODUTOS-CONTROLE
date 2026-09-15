@@ -97,7 +97,7 @@ app.get('/ping', (req, res) => res.status(200).send('pong'));
 // Self-ping to keep Render free tier alive
 const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes
 setInterval(() => {
-  const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  const url = 'https://cprodutos-controle.onrender.com';
   fetch(`${url}/ping`)
     .then(res => console.log(`[Keep-Alive] Pinged ${url} - Status: ${res.status}`))
     .catch(err => console.error(`[Keep-Alive] Error pinging ${url}:`, err.message));
