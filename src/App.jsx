@@ -976,12 +976,93 @@ function App() {
 
   return (
     <>
-      <header className="header glass-panel" style={{ padding: '1rem 5%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img src={logo} alt="Logo" style={{ height: '40px', width: '40px', borderRadius: '8px', objectFit: 'cover' }} />
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#333', fontWeight: 'bold' }}>PRODUTOS</h1>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', position: 'relative' }}>
+      <header className="header glass-panel main-top-header" style={{ position: 'relative', zIndex: 100, padding: '1rem 5%' }}>
+        <div className="top-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <img src={logo} alt="Logo" style={{ height: '40px', width: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+            <h1 className="header-title" style={{ margin: 0, fontSize: '1.5rem', color: '#333', fontWeight: 'bold' }}>PRODUTOS</h1>
+          </div>
+
+          <div className="search-wrapper-container main-search-bar" style={{ display: 'flex', alignItems: 'center', flex: 1, position: 'relative', margin: '0 1rem' }}>
+            <div className="search-input-wrapper" style={{ position: 'relative', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+              <input 
+                type="text" 
+                placeholder="Buscar produtos, marcas e muito mais..." 
+                value={searchTerm}
+                onFocus={() => setShowSearchHistory(true)}
+                onBlur={() => setTimeout(() => setShowSearchHistory(false), 200)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSearchHistory(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchTerm.trim()) {
+                    const newHistory = [searchTerm.trim(), ...searchHistory.filter(h => h !== searchTerm.trim())].slice(0, 5);
+                    setSearchHistory(newHistory);
+                    localStorage.setItem('vitrine_search_history', JSON.stringify(newHistory));
+                    setShowSearchHistory(false);
+                  }
+                }}
+                style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', borderRadius: '24px', border: '1px solid #ccc', outline: 'none', fontSize: '1rem', boxShadow: '0 1px 3px 0 rgba(0,0,0,.1)' }}
+              />
+              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, display: 'flex', alignItems: 'center' }}><Search size={20} color="var(--text-secondary)" /></span>
+              
+              {showSearchHistory && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '0 0 12px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 110, overflow: 'hidden', marginTop: '4px' }}>
+                  {!searchTerm.trim() && searchHistory.map((h, i) => (
+                    <div 
+                      key={`hist-${i}`} 
+                      onClick={() => { setSearchTerm(h); setShowSearchHistory(false); }}
+                      style={{ padding: '0.85rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1rem', color: '#333' }}
+                      onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
+                      onMouseOut={(e) => e.target.style.background = '#fff'}
+                    >
+                      <span style={{ opacity: 0.4, fontSize: '1.2rem' }}>🕒</span> {h}
+                    </div>
+                  ))}
+
+                  {searchTerm.trim() && catalog
+                    .filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
+                    .slice(0, 5)
+                    .map((p, i) => (
+                      <div 
+                        key={`sug-${i}`} 
+                        onClick={() => { 
+                          setSearchTerm(p.name);
+                          const newHistory = [p.name, ...searchHistory.filter(h => h !== p.name)].slice(0, 5);
+                          setSearchHistory(newHistory);
+                          localStorage.setItem('vitrine_search_history', JSON.stringify(newHistory));
+                          setShowSearchHistory(false); 
+                        }}
+                        style={{ padding: '0.85rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1rem', color: '#333' }}
+                        onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
+                        onMouseOut={(e) => e.target.style.background = '#fff'}
+                      >
+                        <span style={{ opacity: 0.4, fontSize: '1.2rem' }}><Search size={18} color="var(--text-secondary)" /></span> 
+                        <span>
+                          {(p.name || '').toLowerCase().split(searchTerm.toLowerCase()).map((part, index, array) => (
+                            <span key={index}>
+                              {part}
+                              {index < array.length - 1 && <strong>{searchTerm.toLowerCase()}</strong>}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="user-menu-icons" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', position: 'relative' }}>
+            <button className="cart-btn-header" onClick={() => setIsCartOpen(true)} style={{ position: 'relative', background: 'transparent', border: 'none', color: '#333', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }} title="Ver Carrinho">
+              <ShoppingCart size={24} />
+              {cart.length > 0 && (
+                <span style={{ position: 'absolute', top: '-4px', right: '-8px', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                  {cart.reduce((a,c) => a + c.cartQuantity, 0)}
+                </span>
+              )}
+            </button>
           {/* Bell Icon */}
           <div 
             style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
@@ -1138,10 +1219,11 @@ function App() {
             </div>
           )}
         </div>
+        </div>
       </header>
 
       {/* Sub-header Navigation */}
-      <div style={{ background: 'var(--primary-color)', padding: '0.75rem 5%', display: 'flex', gap: '2rem', alignItems: 'center', fontSize: '1rem', color: '#fff', position: 'relative', zIndex: 90 }}>
+      <div className="nav-container-scroll" style={{ background: 'var(--primary-color)', padding: '0.75rem 5%', display: 'flex', gap: '2rem', alignItems: 'center', fontSize: '1rem', color: '#fff', position: 'relative', zIndex: 90, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
         
         <div style={{ position: 'relative' }}>
           <div 
@@ -1200,91 +1282,6 @@ function App() {
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
             {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis'))))}
           </h2>
-          
-          <div className="search-wrapper-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, justifyContent: 'flex-end', position: 'relative' }}>
-            {(activeTab === 'produtos' || activeTab === 'favoritos' || activeTab === 'sugestoes') && (
-              <div className="search-input-wrapper" style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
-                <input 
-                  type="text" 
-                  placeholder="Buscar produtos, marcas e muito mais..." 
-                  value={searchTerm}
-                  onFocus={() => setShowSearchHistory(true)}
-                  onBlur={() => setTimeout(() => setShowSearchHistory(false), 200)}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setShowSearchHistory(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchTerm.trim()) {
-                      const newHistory = [searchTerm.trim(), ...searchHistory.filter(h => h !== searchTerm.trim())].slice(0, 5);
-                      setSearchHistory(newHistory);
-                      localStorage.setItem('vitrine_search_history', JSON.stringify(newHistory));
-                      setShowSearchHistory(false);
-                    }
-                  }}
-                  style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', borderRadius: '4px', border: '1px solid #ccc', outline: 'none', fontSize: '1rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,.1)' }}
-                />
-                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, display: 'flex', alignItems: 'center' }}><Search size={20} color="var(--text-secondary)" /></span>
-                
-                {showSearchHistory && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '0 0 4px 4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 110, overflow: 'hidden' }}>
-                    {/* Histórico quando não tem busca */}
-                    {!searchTerm.trim() && searchHistory.map((h, i) => (
-                      <div 
-                        key={`hist-${i}`} 
-                        onClick={() => { setSearchTerm(h); setShowSearchHistory(false); }}
-                        style={{ padding: '0.85rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1rem', color: '#333' }}
-                        onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
-                        onMouseOut={(e) => e.target.style.background = '#fff'}
-                      >
-                        <span style={{ opacity: 0.4, fontSize: '1.2rem' }}>🕒</span> {h}
-                      </div>
-                    ))}
-
-                    {/* Auto-completar quando tem busca */}
-                    {searchTerm.trim() && catalog
-                      .filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
-                      .slice(0, 5)
-                      .map((p, i) => (
-                        <div 
-                          key={`sug-${i}`} 
-                          onClick={() => { 
-                            setSearchTerm(p.name);
-                            const newHistory = [p.name, ...searchHistory.filter(h => h !== p.name)].slice(0, 5);
-                            setSearchHistory(newHistory);
-                            localStorage.setItem('vitrine_search_history', JSON.stringify(newHistory));
-                            setShowSearchHistory(false); 
-                          }}
-                          style={{ padding: '0.85rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1rem', color: '#333' }}
-                          onMouseOver={(e) => e.target.style.background = '#f5f5f5'}
-                          onMouseOut={(e) => e.target.style.background = '#fff'}
-                        >
-                          <span style={{ opacity: 0.4, fontSize: '1.2rem' }}><Search size={18} color="var(--text-secondary)" /></span> 
-                          <span>
-                            {(p.name || '').toLowerCase().split(searchTerm.toLowerCase()).map((part, index, array) => (
-                              <span key={index}>
-                                {part}
-                                {index < array.length - 1 && <strong>{searchTerm.toLowerCase()}</strong>}
-                              </span>
-                            ))}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            )}
-            
-
-            <button className="btn-secondary" onClick={() => setIsCartOpen(true)} style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingCart size={18} /> Ver Carrinho</div>
-              {cart.length > 0 && (
-                <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--primary-color)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                  {cart.reduce((a,c) => a + c.cartQuantity, 0)}
-                </span>
-              )}
-            </button>
-          </div>
         </div>
 
         {(() => {
