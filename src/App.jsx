@@ -1494,25 +1494,7 @@ function App() {
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{item.sold || 0} vendidos</div>
                 </div>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem', fontSize: '0.9rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: '#3483fa', fontWeight: '500', marginBottom: '0.25rem' }}>
-                      Chegará em até {item.deliveryDays || 3} dias
-                    </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Em estoque</div>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{item.quantity} und</div>
-                  </div>
-                  <div style={{ 
-                    background: status.bg, 
-                    color: status.color, 
-                    padding: '0.25rem 0.75rem', 
-                    borderRadius: '1rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold'
-                  }}>
-                    {status.label}
-                  </div>
-                </div>
+                
 
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
                   <button 
