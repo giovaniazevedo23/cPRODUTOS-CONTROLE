@@ -980,10 +980,7 @@ function App() {
         <div className="top-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <img src={logo} alt="Logo" style={{ height: '40px', width: '40px', borderRadius: '8px', objectFit: 'cover' }} />
-            <div className="header-title-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h1 className="header-title" style={{ margin: 0, fontSize: '1.2rem', color: '#333', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: '1.2' }}>GESTE</h1>
-              <span className="header-subtitle" style={{ fontSize: '0.75rem', color: '#666', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produtos Disponíveis</span>
-            </div>
+            <h1 className="header-title" style={{ margin: 0, fontSize: '1.5rem', color: '#333', fontWeight: 'bold' }}>PRODUTOS</h1>
           </div>
 
           <div className="search-wrapper-container main-search-bar" style={{ display: 'flex', alignItems: 'center', flex: 1, position: 'relative', margin: '0 1rem' }}>
@@ -1283,7 +1280,7 @@ function App() {
       <main className="main-content" style={{ marginTop: '2rem' }}>
         <div className="toolbar search-toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
-            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis'))))}
+            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis - GESTE'))))}
           </h2>
         </div>
 
