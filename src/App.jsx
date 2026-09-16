@@ -1280,7 +1280,7 @@ function App() {
       <main className="main-content" style={{ marginTop: '2rem' }}>
         <div className="toolbar search-toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
-            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis - GESTE'))))}
+            {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : `Produtos Disponíveis - ${companies.find(c => c.cnpj === customerInfo?.cnpj)?.name?.toUpperCase() || 'GESTE'}`))))}
           </h2>
         </div>
 
