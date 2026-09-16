@@ -2773,6 +2773,7 @@ function App() {
                 <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Categoria: {viewingProduct.category || 'Outros'}</p>
                 <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Vendas: {viewingProduct.sold || 0} vendidos</p>
                 <p style={{ margin: '0 0 0.25rem 0', color: '#3483fa', fontSize: '0.9rem', fontWeight: '500' }}>Chegará em até {viewingProduct.deliveryDays || 3} dias</p>
+                <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Em estoque: <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingProduct.quantity} und</span></p>
                 
                 <div style={{ margin: '1rem 0 0 0', fontSize: '1.8rem', fontWeight: 'bold', color: viewingProduct.isOffer ? 'var(--danger)' : 'var(--primary-color)' }}>
                   R$ {Number(viewingProduct.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
