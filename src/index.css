@@ -189,3 +189,33 @@ h1, h2, h3 {
     font-weight: 800;
   }
 }
+
+/* Modal ML Layout Responsive */
+.modal-ml-layout {
+  flex-direction: row;
+}
+.modal-ml-thumbnails {
+  flex-direction: column;
+  max-height: 400px;
+}
+.modal-buttons-row {
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .modal-ml-layout {
+    flex-direction: column !important;
+  }
+  .modal-ml-thumbnails {
+    flex-direction: row !important;
+    max-height: none !important;
+    width: 100%;
+  }
+  .modal-ml-thumbnails img {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .modal-buttons-row {
+    flex-direction: column !important;
+  }
+}

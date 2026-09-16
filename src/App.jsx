@@ -2703,9 +2703,9 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
               
                 {/* Fotos */}
-                <div style={{ width: '100%', background: '#fff', borderRadius: '0.5rem', padding: '1rem', display: 'flex', gap: '1rem', flexDirection: window.innerWidth < 768 ? 'column-reverse' : 'row', alignItems: 'flex-start' }}>
+                <div className="modal-ml-layout" style={{ width: "100%", background: "#fff", borderRadius: "0.5rem", padding: "1rem", display: "flex", gap: "1rem", alignItems: "flex-start" }}>
                   {viewingProduct.imageUrls && viewingProduct.imageUrls.length > 1 && (
-                    <div style={{ display: 'flex', flexDirection: window.innerWidth < 768 ? 'row' : 'column', gap: '0.5rem', overflow: 'auto', maxHeight: window.innerWidth < 768 ? 'none' : '400px' }}>
+                    <div className="modal-ml-thumbnails" style={{ display: "flex", gap: "0.5rem", overflow: "auto" }}>
                       {viewingProduct.imageUrls.map((url, idx) => (
                         <img 
                           key={idx} 
@@ -2787,9 +2787,9 @@ function App() {
                     })()} {viewingProduct.hasInterest ? 'com juros' : 'sem juros'}
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button 
-                    className="btn-secondary" 
+                <div className="modal-buttons-row" style={{ display: "flex", gap: "0.5rem" }}>
+                    <button 
+                      className="btn-secondary" 
                     disabled={viewingProduct.quantity <= 0}
                     style={{ flex: 1, padding: '0.75rem', fontSize: '1rem', color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
                     onClick={() => {
