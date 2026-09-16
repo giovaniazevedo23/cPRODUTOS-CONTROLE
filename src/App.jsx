@@ -1196,14 +1196,14 @@ function App() {
       <div className="app-container" style={{ padding: '0 5%' }}>
 
       <main className="main-content" style={{ marginTop: '2rem' }}>
-        <div className="toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="toolbar search-toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
             {activeTab === 'ofertas' ? 'Ofertas do Dia' : (activeTab === 'cupons' ? 'Seus Cupons de Desconto' : (activeTab === 'favoritos' ? 'Meus Favoritos' : (activeTab === 'sugestoes' ? 'Sugestões Para Você' : (selectedCategory ? `Categoria: ${selectedCategory}` : 'Produtos Disponíveis'))))}
           </h2>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, justifyContent: 'flex-end', position: 'relative' }}>
+          <div className="search-wrapper-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, justifyContent: 'flex-end', position: 'relative' }}>
             {(activeTab === 'produtos' || activeTab === 'favoritos' || activeTab === 'sugestoes') && (
-              <div style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
+              <div className="search-input-wrapper" style={{ position: 'relative', flex: 1, maxWidth: '500px' }}>
                 <input 
                   type="text" 
                   placeholder="Buscar produtos, marcas e muito mais..." 

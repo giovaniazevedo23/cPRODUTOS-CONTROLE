@@ -219,3 +219,25 @@ h1, h2, h3 {
     flex-direction: column !important;
   }
 }
+
+
+@media (max-width: 768px) {
+  .search-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .search-wrapper-container {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+  .search-input-wrapper {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .search-wrapper-container > button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
