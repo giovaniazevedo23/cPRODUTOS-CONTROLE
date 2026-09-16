@@ -76,6 +76,7 @@ function App() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportTarget, setSupportTarget] = useState('loja');
   const [supportMessage, setSupportMessage] = useState('');
   const [supportAttachment, setSupportAttachment] = useState(null);
   const [chatAttachment, setChatAttachment] = useState(null);
@@ -227,6 +228,21 @@ function App() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!loginForm.email) {
+      alert('Por favor, informe seu E-mail de cadastro no campo "E-mail" e clique em "Esqueci minha senha" novamente.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, loginForm.email);
+      alert('Se o e-mail estiver cadastrado, um link de restauração de senha foi enviado para ele!');
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao enviar e-mail de recuperação.');
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
@@ -261,6 +277,20 @@ function App() {
           alert('Esse CPF já está vinculado a outro cadastro.');
           return;
         }
+
+        if (loginForm.password && loginForm.password.length >= 6) {
+          try {
+            await createUserWithEmailAndPassword(auth, loginForm.email, loginForm.password);
+          } catch(err) {
+            if (err.code === 'auth/email-already-in-use') {
+               alert('Este e-mail já está em uso.');
+            } else {
+               alert('Erro ao criar conta: ' + err.message);
+            }
+            return;
+          }
+        }
+
         const customerObj = {
           name: loginForm.name,
           cpf: loginForm.cpf,
@@ -270,43 +300,40 @@ function App() {
           createdAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'customers', cpfClean), customerObj);
-        setCustomerInfo(customerObj);
-        setProfileData({ birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '' });
         
         try {
           const welcomeHtml = `
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #FF921C; margin: 0; font-size: 28px;">GESTE</h1>
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1F2937; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-top: 5px solid #FF921C;">
+              <div style="text-align: center; margin-bottom: 25px;">
+                <img src="https://meucontrole-hbe8.onrender.com/favicon.jpg" alt="Logo GESTE" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" />
+                <h1 style="color: #FF921C; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">GESTE</h1>
               </div>
-              <p style="font-size: 16px;">Olá, <strong>${loginForm.name}</strong>,</p>
-              <p style="font-size: 16px;">Seja muito bem-vindo(a)! É um prazer enorme ter você com a gente. 🥰</p>
-              <p style="font-size: 16px;">A GESTE é o seu mais novo destino para fazer compras de forma prática, rápida e segura. Nós reunimos diversas lojas incríveis em um só lugar para que você tenha a melhor experiência possível na hora de encontrar exatamente o que procura.</p>
-              <p style="font-size: 16px;">A partir de agora, ao acessar o nosso painel, você tem um mundo de possibilidades na palma da mão:</p>
-              <ul style="font-size: 16px; line-height: 1.6;">
-                <li>🏪 <strong>Escolha suas lojas favoritas:</strong> Navegue por diferentes estabelecimentos e escolha de qual loja você quer comprar hoje.</li>
-                <li>👀 <strong>Explore catálogos completos:</strong> Veja fotos, preços e todos os detalhes dos produtos que você deseja antes de colocar no carrinho.</li>
-                <li>🛒 <strong>Compre com facilidade:</strong> Tudo em um ambiente pensado para que a sua compra seja simples, do início ao fim.</li>
-              </ul>
-              <p style="font-size: 16px; margin-top: 20px;">Pronto para encontrar o que você procura?</p>
-              <p style="font-size: 16px;">Acesse sua conta agora mesmo, escolha a loja da sua preferência e aproveite as novidades!</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://geste.onrender.com" style="background-color: #FF921C; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Explorar Lojas e Produtos</a>
+              <p style="font-size: 16px; color: #374151;">Olá, <strong>${loginForm.name}</strong>,</p>
+              <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">Seja muito bem-vindo(a)! É um prazer enorme ter você com a gente. 🥰</p>
+              <p style="font-size: 16px; line-height: 1.6; color: #4B5563;">A GESTE é o seu mais novo destino para fazer compras de forma prática, rápida e segura. Nós reunimos diversas lojas incríveis em um só lugar para que você tenha a melhor experiência possível na hora de encontrar exatamente o que procura.</p>
+              
+              <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                  <p style="font-size: 16px; margin-top: 0; font-weight: 600;">Ao acessar o nosso painel, você tem o mundo na palma da mão:</p>
+                  <ul style="font-size: 15px; line-height: 1.7; color: #374151; padding-left: 20px; margin-bottom: 0;">
+                    <li>🏪 <strong>Escolha suas lojas favoritas:</strong> Navegue por diferentes estabelecimentos e escolha de qual loja você quer comprar hoje.</li>
+                    <li>👀 <strong>Explore catálogos completos:</strong> Veja fotos, preços e todos os detalhes dos produtos.</li>
+                    <li>🛒 <strong>Compre com facilidade:</strong> Tudo em um ambiente pensado para que a sua compra seja simples, do início ao fim.</li>
+                  </ul>
               </div>
-              <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="margin-top: 0; color: #555; text-align: center;">Lojas em destaque essa semana:</h3>
-                <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
-                  <div style="text-align: center;"><span style="font-size: 24px;">🏢</span><br><small>Super Lojas</small></div>
-                  <div style="text-align: center;"><span style="font-size: 24px;">🛍️</span><br><small>Moda \u0026 Cia</small></div>
-                  <div style="text-align: center;"><span style="font-size: 24px;">🏬</span><br><small>Eletro Center</small></div>
-                </div>
+
+              <p style="font-size: 16px; text-align: center; margin-top: 30px; font-weight: 600;">Pronto para encontrar o que você procura?</p>
+              
+              <div style="text-align: center; margin: 25px 0 35px 0;">
+                <a href="https://geste.onrender.com" style="background-color: #FF921C; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(255, 146, 28, 0.3);">Explorar Lojas e Produtos</a>
               </div>
-              <p style="font-size: 14px; color: #777;">Se tiver qualquer dúvida durante a navegação, nossa equipe está pronta para te ajudar. É só responder a este e-mail.</p>
-              <p style="font-size: 16px; margin-bottom: 5px;">Desejamos a você excelentes compras! 🎁</p>
-              <p style="font-size: 16px; font-weight: bold; margin-top: 0;">Um abraço,<br>Equipe GESTE 💙</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-              <div style="text-align: center; font-size: 12px; color: #999;">
-                <a href="https://geste.onrender.com" style="color: #FF921C; text-decoration: none;">Acesse nosso site</a>
+              
+              <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;" />
+              
+              <p style="font-size: 14px; color: #6B7280; text-align: center;">Se tiver qualquer dúvida durante a navegação, nossa equipe está pronta para te ajudar. É só responder a este e-mail.</p>
+              <p style="font-size: 16px; font-weight: bold; color: #1F2937; text-align: center; margin-top: 20px;">Desejamos a você excelentes compras! 🎁</p>
+              
+              <div style="text-align: center; font-size: 12px; color: #9CA3AF; margin-top: 20px;">
+                Equipe GESTE 💙 | <a href="https://geste.onrender.com" style="color: #FF921C; text-decoration: none;">Acesse nosso site</a>
               </div>
             </div>
           `;
@@ -326,6 +353,9 @@ function App() {
         } catch (emailErr) {
           console.error("Erro ao enviar email de boas-vindas:", emailErr);
         }
+
+        setCustomerInfo(customerObj);
+        setProfileData({ birthday: '', address: '', neighborhood: '', zip: '', city: '', state: '' });
       } else {
         alert("Por favor, preencha todos os campos obrigatórios.");
       }
@@ -2988,13 +3018,27 @@ function App() {
               
               setIsSupportSending(true);
               try {
+                let targetEmail = 'geste.suporte@gmail.com';
+                let subject = `Novo Chamado de Suporte de ${customerInfo?.name || 'Cliente'} (GESTE)`;
+
+                if (supportTarget === 'loja') {
+                  const storeUsers = users.filter(u => u.companyCnpj === customerInfo?.cnpj);
+                  const storeEmail = storeUsers.find(u => u.companyEmail)?.companyEmail || storeUsers.find(u => u.email)?.email;
+                  if (storeEmail) {
+                    targetEmail = storeEmail;
+                    subject = `Contato via Loja: ${customerInfo?.name || 'Cliente'}`;
+                  } else {
+                    alert('Não foi possível encontrar o e-mail desta loja. Sua mensagem será enviada ao suporte da GESTE.');
+                  }
+                }
+
                 await emailjs.send(
                   'service_n2k30o9',
                   'template_tht2nks',
                   {
-                    to_email: 'geste.suporte@gmail.com',
-                    subject: `Novo Chamado de Suporte de ${customerInfo?.name || 'Cliente'}`,
-                    html_message: `<p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>` + (supportAttachment ? `<br/><p><strong>Anexo:</strong></p><img src="${supportAttachment}" style="max-width:100%; max-height:400px;" />` : '')
+                    to_email: targetEmail,
+                    subject: subject,
+                    html_message: `<p><strong>Destino:</strong> ${supportTarget === 'loja' ? 'Loja' : 'Plataforma GESTE'}</p><p><strong>Cliente:</strong> ${customerInfo?.name}</p><p><strong>CPF:</strong> ${customerInfo?.cpf}</p><p><strong>Email:</strong> ${customerInfo?.email || 'Não informado'}</p><p><strong>Mensagem:</strong><br/>${supportMessage}</p>` + (supportAttachment ? `<br/><p><strong>Anexo:</strong></p><img src="${supportAttachment}" style="max-width:100%; max-height:400px;" />` : '')
                   },
                   { publicKey: 'mNLHg4WMPI_KmzA8c' }
                 );
@@ -3090,6 +3134,20 @@ function App() {
               }
               setIsSupportSending(false);
             }}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>Enviar para:</label>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', padding: '10px', background: '#f5f5f5', borderRadius: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    <input type="radio" name="supportTarget" value="loja" checked={supportTarget === 'loja'} onChange={() => setSupportTarget('loja')} />
+                    Loja (Dúvidas sobre produtos)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    <input type="radio" name="supportTarget" value="geste" checked={supportTarget === 'geste'} onChange={() => setSupportTarget('geste')} />
+                    GESTE (Problemas na plataforma)
+                  </label>
+                </div>
+              </div>
+
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label>Sua Mensagem</label>
                 <textarea 
