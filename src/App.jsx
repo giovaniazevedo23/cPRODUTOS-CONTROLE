@@ -1441,11 +1441,7 @@ function App() {
                   </div>
                 )}
                 
-                {item.quantity <= 15 && item.quantity > 0 && (
-                  <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--danger)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10 }}>
-                    🔥 Últimas Unidades
-                  </div>
-                )}
+                {/* Removed top absolute Últimas Unidades badge */}
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.name} style={{ width: '100%', height: '150px', objectFit: 'contain', borderRadius: '0.5rem', background: '#fff' }} />
                 ) : (
@@ -1456,6 +1452,12 @@ function App() {
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>SKU: {item.sku}</div>
                 <div>
                   <h3 style={{ margin: '0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{item.name}</h3>
+                  
+                  {item.quantity <= 15 && item.quantity > 0 && (
+                    <div style={{ display: 'inline-block', marginTop: '0.5rem', background: 'var(--danger)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      🔥 Últimas Unidades
+                    </div>
+                  )}
                   
                   {/* Reviews Summary Snippet */}
                   {(() => {
