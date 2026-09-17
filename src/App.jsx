@@ -1109,7 +1109,11 @@ function App() {
               border: '1px solid rgba(0,0,0,0.05)', position: 'relative'
             }}>
               {customerInfo.name.charAt(0).toUpperCase()}
-              {hasUnreadClient && <span style={{ position: 'absolute', top: 0, right: 0, width: '10px', height: '10px', background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }}></span>}
+              {unreadDealsCount > 0 && (
+                <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 5px', fontSize: '0.65rem', fontWeight: 'bold', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '16px', height: '16px' }}>
+                  {unreadDealsCount}
+                </span>
+              )}
             </div>
             <div style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
               <div style={{ fontWeight: '400', color: '#333', fontSize: '0.9rem' }}>
@@ -1166,7 +1170,11 @@ function App() {
                   onMouseOut={(e) => e.target.style.background = 'transparent'}
                 >
                   <ShoppingBag size={18} style={{ opacity: 0.7 }} /> Compras
-                  {hasUnreadClient && <span style={{ width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', marginLeft: 'auto' }}></span>}
+                  {unreadDealsCount > 0 && (
+                    <span style={{ marginLeft: 'auto', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                      {unreadDealsCount}
+                    </span>
+                  )}
                 </button>
                 <button 
                   onClick={() => { setShowViewedHistoryModal(true); setIsUserMenuOpen(false); }}
