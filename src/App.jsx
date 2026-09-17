@@ -228,20 +228,7 @@ function App() {
     }
   };
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (!loginForm.email) {
-      alert('Por favor, informe seu E-mail de cadastro no campo "E-mail" e clique em "Esqueci minha senha" novamente.');
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, loginForm.email);
-      alert('Se o e-mail estiver cadastrado, um link de restauração de senha foi enviado para ele!');
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao enviar e-mail de recuperação.');
-    }
-  };
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
