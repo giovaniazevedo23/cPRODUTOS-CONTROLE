@@ -135,7 +135,8 @@ function App() {
   const [showOpinionsModal, setShowOpinionsModal] = useState(false);
 
   const unreadDealsCount = deals.filter(d => {
-    if (d.messages && d.messages.length > 0) {
+    const isMyDeal = customerInfo && (d.customerCpf === customerInfo.cpf || d.client === customerInfo.name);
+    if (isMyDeal && d.messages && d.messages.length > 0) {
       return d.messages[d.messages.length - 1].role === 'admin' && !d.clientRead;
     }
     return false;
@@ -1585,6 +1586,11 @@ function App() {
                   </button>
                 )}
               </div>
+              {selectedSalesperson && (
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255, 146, 28, 0.1)', color: '#ff921c', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}>
+                  ⚠️ Por favor, fale com o vendedor {selectedSalesperson} antes de finalizar a compra.
+                </div>
+              )}
             </div>
             <div className="form-actions" style={{ justifyContent: 'center' }}>
               <button type="button" className="btn-secondary" onClick={() => setPurchaseItem(null)}>Cancelar</button>
