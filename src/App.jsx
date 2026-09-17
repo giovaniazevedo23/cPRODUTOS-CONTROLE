@@ -134,12 +134,12 @@ function App() {
   const [showViewedHistoryModal, setShowViewedHistoryModal] = useState(false);
   const [showOpinionsModal, setShowOpinionsModal] = useState(false);
 
-  const hasUnreadClient = deals.some(d => {
+  const unreadDealsCount = deals.filter(d => {
     if (d.messages && d.messages.length > 0) {
-      return d.messages[d.messages.length - 1].role === 'admin';
+      return d.messages[d.messages.length - 1].role === 'admin' && !d.clientRead;
     }
     return false;
-  });
+  }).length;
 
   const hasNfeNotification = customerInfo ? deals.some(d => (d.customerCpf === customerInfo.cpf || d.client === customerInfo.name) && d.nfeNotification) : false;
 
@@ -2373,11 +2373,20 @@ function App() {
                             <div>
                               <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Vendedor: {deal.salesperson || 'Atendimento'}</div>
                               <button 
-                                onClick={(e) => { e.stopPropagation(); setInternalChat({ dealId: deal.id, msg: '' }); }}
+                                onClick={async (e) => { 
+                                  e.stopPropagation(); 
+                                  setInternalChat({ dealId: deal.id, msg: '' }); 
+                                  if (deal.messages && deal.messages.length > 0 && deal.messages[deal.messages.length - 1].role === 'admin' && !deal.clientRead) {
+                                    try {
+                                      const { doc, updateDoc } = await import('firebase/firestore');
+                                      await updateDoc(doc(db, 'deals', deal.id), { clientRead: true });
+                                    } catch(err) { console.error(err); }
+                                  }
+                                }}
                                 style={{ background: 'none', border: 'none', fontSize: '0.8rem', color: '#3483fa', textDecoration: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                               >
                                 Abrir Chat do Pedido
-                                {deal.messages && deal.messages.length > 0 && deal.messages[deal.messages.length - 1].role === 'admin' && (
+                                {deal.messages && deal.messages.length > 0 && deal.messages[deal.messages.length - 1].role === 'admin' && !deal.clientRead && (
                                   <span style={{ width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%', display: 'inline-block' }}></span>
                                 )}
                               </button>
