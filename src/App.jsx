@@ -1588,7 +1588,7 @@ function App() {
               </div>
               {selectedSalesperson && (
                 <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255, 146, 28, 0.1)', color: '#ff921c', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}>
-                  ⚠️ Por favor, fale com o vendedor {selectedSalesperson} antes de finalizar a compra.
+                  Por favor, fale com o vendedor {selectedSalesperson} antes de finalizar a compra.
                 </div>
               )}
             </div>
