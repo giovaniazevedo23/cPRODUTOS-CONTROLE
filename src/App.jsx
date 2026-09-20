@@ -1258,56 +1258,57 @@ function App() {
       </header>
 
       {/* Sub-header Navigation */}
-      <div className="nav-container-scroll" style={{ background: 'var(--primary-color)', padding: '0.75rem 5%', display: 'flex', gap: '2rem', alignItems: 'center', fontSize: '1rem', color: '#fff', position: 'relative', zIndex: 90, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
-        
-        <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
+        <div className="nav-container-scroll" style={{ background: 'var(--primary-color)', padding: '0.75rem 5%', display: 'flex', gap: '2rem', alignItems: 'center', fontSize: '1rem', color: '#fff', position: 'relative', zIndex: 90, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+          
           <div 
             onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
           >
             Categorias <span style={{ fontSize: '0.6rem', transform: isCategoryMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
           </div>
-          {isCategoryMenuOpen && (
-            <>
-              <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 90 }} onClick={() => setIsCategoryMenuOpen(false)} />
-              <div style={{ 
-                position: 'absolute', top: '100%', left: 0, background: '#333', color: '#fff', 
-                borderRadius: '4px', marginTop: '0.5rem', width: '220px', zIndex: 91,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)', padding: '0.5rem 0'
-              }}>
-                {/* Seta superior do dropdown escuro */}
-                <div style={{ position: 'absolute', top: '-5px', left: '20px', width: '10px', height: '10px', background: '#333', transform: 'rotate(45deg)' }} />
-                
-                <div 
-                  onClick={() => { setSelectedCategory(''); setIsCategoryMenuOpen(false); setActiveTab('produtos'); }} 
-                  style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', background: selectedCategory === '' ? 'rgba(255,255,255,0.1)' : 'transparent' }}
-                  onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-                  onMouseOut={(e) => e.target.style.background = selectedCategory === '' ? 'rgba(255,255,255,0.1)' : 'transparent'}
-                >Todos os Produtos</div>
-                {['Tecnologia', 'Casa e Móveis', 'Eletrodomésticos', 'Esportes e Fitness', 'Ferramentas', 'Supermercado', 'Veículos', 'Construção', 'Indústria e Comércio', 'Outros'].map(cat => (
-                  <div 
-                    key={cat}
-                    onClick={() => { setSelectedCategory(cat); setIsCategoryMenuOpen(false); setActiveTab('produtos'); }} 
-                    style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', background: selectedCategory === cat ? 'rgba(255,255,255,0.1)' : 'transparent' }}
-                    onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-                    onMouseOut={(e) => e.target.style.background = selectedCategory === cat ? 'rgba(255,255,255,0.1)' : 'transparent'}
-                  >
-                    {cat}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+
+          <div onClick={() => { setActiveTab('ofertas'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'ofertas' ? 'bold' : 'normal' }}>Ofertas</div>
+          <div onClick={() => { setActiveTab('cupons'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'cupons' ? 'bold' : 'normal' }}>Cupons</div>
+          <div onClick={() => { setActiveTab('favoritos'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'favoritos' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Heart size={16} fill={activeTab === 'favoritos' ? 'var(--primary-color)' : 'none'} color={activeTab === 'favoritos' ? 'var(--primary-color)' : 'currentColor'} /> Favoritos
+          </div>
+          <div onClick={() => { setActiveTab('sugestoes'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'sugestoes' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Sparkles size={16} color="var(--primary-color)" /> Sugestões
+          </div>
         </div>
 
-        <div onClick={() => { setActiveTab('ofertas'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'ofertas' ? 'bold' : 'normal' }}>Ofertas</div>
-        <div onClick={() => { setActiveTab('cupons'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'cupons' ? 'bold' : 'normal' }}>Cupons</div>
-        <div onClick={() => { setActiveTab('favoritos'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'favoritos' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Heart size={16} fill={activeTab === 'favoritos' ? 'var(--primary-color)' : 'none'} color={activeTab === 'favoritos' ? 'var(--primary-color)' : 'currentColor'} /> Favoritos
-        </div>
-        <div onClick={() => { setActiveTab('sugestoes'); setSelectedCategory(''); }} style={{ cursor: 'pointer', fontWeight: activeTab === 'sugestoes' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Sparkles size={16} color="var(--primary-color)" /> Sugestões
-        </div>
+        {isCategoryMenuOpen && (
+          <>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 90 }} onClick={() => setIsCategoryMenuOpen(false)} />
+            <div style={{ 
+              position: 'absolute', top: '100%', left: '5%', background: '#333', color: '#fff', 
+              borderRadius: '4px', width: '220px', zIndex: 91,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)', padding: '0.5rem 0'
+            }}>
+              {/* Seta superior do dropdown escuro */}
+              <div style={{ position: 'absolute', top: '-5px', left: '20px', width: '10px', height: '10px', background: '#333', transform: 'rotate(45deg)' }} />
+              
+              <div 
+                onClick={() => { setSelectedCategory(''); setIsCategoryMenuOpen(false); setActiveTab('produtos'); }} 
+                style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', background: selectedCategory === '' ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+                onMouseOut={(e) => e.target.style.background = selectedCategory === '' ? 'rgba(255,255,255,0.1)' : 'transparent'}
+              >Todos os Produtos</div>
+              {['Tecnologia', 'Casa e Móveis', 'Eletrodomésticos', 'Esportes e Fitness', 'Ferramentas', 'Supermercado', 'Veículos', 'Construção', 'Indústria e Comércio', 'Outros'].map(cat => (
+                <div 
+                  key={cat}
+                  onClick={() => { setSelectedCategory(cat); setIsCategoryMenuOpen(false); setActiveTab('produtos'); }} 
+                  style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', background: selectedCategory === cat ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                  onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseOut={(e) => e.target.style.background = selectedCategory === cat ? 'rgba(255,255,255,0.1)' : 'transparent'}
+                >
+                  {cat}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="app-container vitrine-app-container">
