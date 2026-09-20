@@ -72,7 +72,7 @@ h1, h2, h3 {
 @media (max-width: 768px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
-    gap: 1rem;
+    gap: 0.5rem;
   }
 }
 

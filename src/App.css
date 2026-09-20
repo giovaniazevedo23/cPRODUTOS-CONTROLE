@@ -62,6 +62,12 @@ header h1 {
   padding: 2rem;
 }
 
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem 0.5rem;
+  }
+}
+
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -461,3 +467,4 @@ tr:hover {
 .kanban-card button.advance-btn:hover {
   background: var(--primary-hover);
 }
+@ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   {   . m a i n - c o n t e n t   {   p a d d i n g :   1 r e m   0 . 5 r e m   ! i m p o r t a n t ;   }   } 
