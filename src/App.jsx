@@ -6,6 +6,15 @@ import logo from './assets/logo.jpg';
 import { db, auth } from './firebase';
 import emailjs from '@emailjs/browser';
 import { Bell, Headset, User, ShoppingBag, Package, History, CreditCard, ShoppingCart, Search, Heart, Sparkles } from 'lucide-react';
+
+const formatCardNumber = (value) => {
+  const v = value.replace(/\D/g, '').substring(0, 16);
+  const parts = [];
+  for (let i = 0; i < v.length; i += 4) {
+    parts.push(v.substring(i, i + 4));
+  }
+  return parts.join(' ');
+};
 const getStatusConfig = (quantity) => {
   if (quantity <= 0) return { label: 'Esgotado', color: 'var(--danger)', bg: '#fef2f2' };
   if (quantity <= 15) return { label: 'Disponível', color: 'var(--warning)', bg: '#fffbeb' };
