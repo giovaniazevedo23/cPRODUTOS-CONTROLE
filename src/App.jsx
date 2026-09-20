@@ -1301,7 +1301,7 @@ function App() {
         </div>
       </div>
 
-      <div className="app-container" style={{ padding: '0 5%' }}>
+      <div className="app-container vitrine-app-container">
 
       <main className="main-content" style={{ marginTop: '2rem' }}>
         <div className="toolbar search-toolbar glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -1457,8 +1457,8 @@ function App() {
             return (
               <div 
                 key={item.id} 
-                className="glass-panel" 
-                style={{ padding: '1.5rem', borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }}
+                className="glass-panel vitrine-product-card" 
+                style={{ borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', cursor: 'pointer', transition: 'all 0.2s' }}
                 onClick={() => handleViewProduct(item)}
               >
                 {item.freeShipping && (

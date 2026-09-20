@@ -468,3 +468,4 @@ tr:hover {
   background: var(--primary-hover);
 }
 @ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   {   . m a i n - c o n t e n t   {   p a d d i n g :   1 r e m   0 . 5 r e m   ! i m p o r t a n t ;   }   } 
+.vitrine-app-container { padding: 0 5%; } .vitrine-product-card { padding: 1.5rem; } @media (max-width: 768px) { .vitrine-app-container { padding: 0 !important; } .vitrine-product-card { padding: 0.5rem !important; } }
